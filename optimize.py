@@ -4,7 +4,7 @@ from simulate import simulate
 
 
 # p: parameters that determine the strength of the effect of the rules
-# arr: order the three genes are arranged
+# arr: order the three genes are arranged e.g. ['L', 'T', 'C']
 # ori: their orientations
 # iptg: True if IPTG is present
 # atc: True if atc is present
@@ -38,7 +38,7 @@ def f(p):
                             orientations = [first, second, third]
                             params = apply_ruleset(p, arrangement, orientations, iptg, atc)
                             if params != None:
-                                yfps = simulate(params)
+                                yfps = simulate(params, arrangement, orientations, iptg, atc) # Saren: for the simulation it is necessary to know the state of the environment and network. Especially the IPTG and aTc inputs!
                                 # TODO: compute the difference between measurement and simulation here
                                 diff = sum(yfps)
                                 # add it to the badness
@@ -93,10 +93,15 @@ def optimize(func, init, mins, maxs):
 
 if __name__ == "__main__":
             # init, min, max
-    params = [(  0,  -1,    1),
-              (  0,  -1,    1),
-              (  0,  -1,    1)]
-
+    params = [( -0.5,  -1,    0), # repressive effect of LacI on LacI
+              ( -0.5,  -1,    0), # repressive effect of LacI on TetR
+              ( -0.5,  -1,    0), # repressive effect of TetR on λcI
+              ( -0.5,  -1,    0), # repressive effect of λcI on YFP
+              (  0.5,   0,    1), # inducer effect of IPTG on LacI
+              (  0.5,   0,    1), # inducer effect of aTc on tetR
+              (    0,  -1,    1)] # what else?
+    
+    
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
