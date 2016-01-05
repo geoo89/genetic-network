@@ -93,12 +93,15 @@ def optimize(func, init, mins, maxs):
 
 if __name__ == "__main__":
             # init, min, max
-    params = [( -0.5,  -1,    0), # repressive effect of LacI on LacI
+    params = [(  600, 100,10000), # Inductive effect of IPTG
+              ( 5000,1000,10000), # Inductive effect of aTc
+              ( -0.5,  -1,    0), # repressive effect of LacI on LacI
               ( -0.5,  -1,    0), # repressive effect of LacI on TetR
               ( -0.5,  -1,    0), # repressive effect of TetR on λcI
               ( -0.5,  -1,    0), # repressive effect of λcI on YFP
               (  0.5,   0,    1), # inducer effect of IPTG on LacI
               (  0.5,   0,    1), # inducer effect of aTc on tetR
+              ( -0.5,  -1,    0), # protein degradation
               (    0,  -1,    1)] # what else?
     
     
