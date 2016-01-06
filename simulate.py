@@ -10,7 +10,7 @@ def simulate(p):
     
     # here time increases in 60 second steps.
     # you'll probably want that to be more fine-grained
-    for time in range(0, 24*60*60, 60):
+    for time in range(0, 4*60*60, 600):
         # hypothetical yfp fluorescence level
         
         #params p needs to be decided and defined (e.g. first parameter is repressive effect of LacI on TetR)
