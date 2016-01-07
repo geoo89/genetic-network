@@ -133,7 +133,10 @@ def optimize(func, init, mins, maxs):
 
 if __name__ == "__main__":
               # init, min, max
-    params = [( -0.5,  -1,    0), # repressive effect of LacI on LacI
+    params = [( -0.5,  -1,    0), # Protein degradation: 
+              # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
+              # Halftime estimated as 20 mins
+              ( -0.5,  -1,    0), # repressive effect of LacI on LacI
               ( -0.5,  -1,    0), # repressive effect of LacI on TetR
               ( -0.5,  -1,    0), # repressive effect of TetR on λcI
               ( -0.5,  -1,    0), # repressive effect of λcI on YFP

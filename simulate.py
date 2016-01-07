@@ -15,9 +15,17 @@ def simulate(p):
         
         #params p needs to be decided and defined (e.g. first parameter is repressive effect of LacI on TetR)
         protein_levels_new = np.zeros(3)
-        
+        #LacI
         protein_levels_new[0] = protein_levels[0] + p[0] * protein_levels[0]; # calculating next protein level depending on the previous ones and parameters.
+        #TetR
+        protein_levels_new[0] = protein_levels[0] + p[0] * protein_levels[0]; # calculating next protein level depending on the previous ones and parameters.
+        #λcI
+        protein_levels_new[0] = protein_levels[0] + p[0] * protein_levels[0]; # calculating next protein level depending on the previous ones and parameters.
+        #YFP
+        
         #TODO Edit previous line and implement for 1 (TetR) and 2 (λcI)
+        
+        
         
         yfp = np.sqrt(float(time)/60)*p[0] - p[1] + p[2]*(p[2]+1)
         # if we're at a full hour, save the value
