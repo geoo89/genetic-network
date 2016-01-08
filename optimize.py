@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 import numpy as np
 import itertools
 import csv
+import matplotlib.pyplot as plt
 from simulate import simulate
 
 
@@ -138,13 +140,13 @@ if __name__ == "__main__":
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
               (   234,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
               # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
-              (   200,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is derived probably derived from the 1/600 repressive effect
+              (   200,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
               (   200,     0, 10000), # 3 PTet Needs to be explored. 
               (     6,     0,   100), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
-              (     6,     0,   100), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
+              (   5.9,     0,   100), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
               (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
-              (    50,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
-              (   0.5,     0,     1), # 8 inhibitory effect of aTc on tetR
+              (    40,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
+              (   0.6,     0,     1), # 8 inhibitory effect of aTc on tetR
               (   0.5,     0,     1)  # 9 inhibitory effect of IPTG on LacI
               
               ]
@@ -153,7 +155,29 @@ if __name__ == "__main__":
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
     maxs = np.array(transpose[2])
-
+    
+    # Testing
+    plt.ion()
+    plt.subplot(221)    
+    init[8] = 0
+    init[9] = 0
+    simulate(init, plt, "None")
+    plt.subplot(222)
+    init[8] = 0.8
+    init[9] = 0
+    simulate(init, plt, "aTc")
+    plt.subplot(223)
+    init[8] = 0
+    init[9] = 0.7
+    simulate(init, plt, "IPTG")
+    plt.subplot(224)
+    init[8] = 0.8
+    init[9] = 0.7
+    simulate(init, plt, "Both")
+    plt.get_current_fig_manager().resize(1000, 800)
+    plt.tight_layout()
+    
+    
     pe = ParamEvaluator('absolute.csv')
     optimize(pe.get_badness, init, mins, maxs)
 
