@@ -10,9 +10,11 @@ def simulate(p):
     
     protein_levels_plot = np.zeros((0, 4))
     
+    total_time = 10*60*60 + 1
+    step = 60
     # here time increases in 60 second steps.
     # you'll probably want that to be more fine-grained
-    for time in range(0, 10*60*60+1, 60):
+    for time in range(0, total_time, step):
         # hypothetical yfp fluorescence level
         
         #params p needs to be decided and defined (e.g. first parameter is repressive effect of LacI on TetR)
@@ -52,7 +54,9 @@ def simulate(p):
         if (time == (4*60*60) or time == (6*60*60) or time == (8*60*60) or time == (10*60*60)) == 0:
             yfp_levels.append(protein_levels_new[4])
     
-    plt.plot(range(0, 600), column(protein_levels_plot, 0), range(0, 600), column(protein_levels_plot, 1), range(0, 600), column(protein_levels_plot, 2), range(0, 600), column(protein_levels_plot, 3))
+    n_rows = total_time / step
+    x = range(0, n_rows)
+    plt.plot(x, column(protein_levels_plot, 0), x, column(protein_levels_plot, 1), x, column(protein_levels_plot, 2), x, column(protein_levels_plot, 3))
     plt.show()
     return yfp_levels
 
