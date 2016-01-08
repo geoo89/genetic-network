@@ -4,8 +4,8 @@ import csv
 from simulate import simulate
 
 
-class ParamEvaluator():
-
+class ParamEvaluator(): 
+    
     def __init__(self, filename):
         # string representation of the 48 types
         self.types = []
@@ -46,14 +46,14 @@ class ParamEvaluator():
         iptg = iptgatc // 2 # integer division
         atc = iptgatc % 2   # modulo
 
-        params = np.zeros(4)
+        params = np.zeros(8)
 
         # if iptg is present:
         if iptg:
-            params[0] += p[0]
-        # if iptg is present:
-        if iptg:
-            params[1] += p[1]
+            params[9] += p[9]
+        # if atc is present:
+        if atc:
+            params[8] += p[8]
 
 
         # mystery stuff
@@ -65,7 +65,7 @@ class ParamEvaluator():
             params[3] += p[3]
             params[2] += p[4]
 
-        # at the end, return the parameters for the simulation determined by the rulset
+        # at the end, return the parameters for the simulation determined by the ruleset
         return params
 
 
@@ -133,16 +133,21 @@ def optimize(func, init, mins, maxs):
 
 if __name__ == "__main__":
               # init, min, max
-    params = [( -0.5,  -1,    0), # Protein degradation: 
+    params = [( -0.02,  -0.2,     0), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
-              # Halftime estimated as 20 mins
-              ( -0.5,  -1,    0), # repressive effect of LacI on LacI
-              ( -0.5,  -1,    0), # repressive effect of LacI on TetR
-              ( -0.5,  -1,    0), # repressive effect of TetR on λcI
-              ( -0.5,  -1,    0), # repressive effect of λcI on YFP
-              (  0.5,   0,    1), # inducer effect of IPTG on LacI
-              (  0.5,   0,    1), # inducer effect of aTc on tetR
-              (    0,  -1,    1)] # what else?
+              # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
+              (   234,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
+              # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
+              (   200,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is derived probably derived from the 1/600 repressive effect
+              (   200,     0, 10000), # 3 PTet Needs to be explored. 
+              (     6,     0,   100), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
+              (     6,     0,   100), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
+              (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
+              (    50,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
+              (   0.5,     0,     1), # 8 inhibitory effect of aTc on tetR
+              (   0.5,     0,     1)  # 9 inhibitory effect of IPTG on LacI
+              
+              ]
     
     transpose = list(zip(*params))
     init = np.array(transpose[0])
