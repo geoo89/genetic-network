@@ -8,6 +8,8 @@ def simulate(p):
     
     protein_levels = np.zeros(4) # Protein levels of LacI, TetR, λcI and YFP (respectively), which will change in each loop
     
+    protein_levels_plot = np.zeros((0, 4))
+    
     # here time increases in 60 second steps.
     # you'll probably want that to be more fine-grained
     for time in range(0, 10*60*60+1, 60):
@@ -40,6 +42,8 @@ def simulate(p):
         #YFP
         protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[2] + (1 / (p[7] * protein_levels[2])) * p[3]; # calculating next protein level depending on the previous ones and parameters.
         
+        protein_levels_plot.r_[protein_levels_plot, protein_levels_new] 
+        
         protein_levels = protein_levels_new
         
         
@@ -47,7 +51,9 @@ def simulate(p):
         # (that's the measured data we have and want to compare to)
         if (time == (4*60*60) or time == (6*60*60) or time == (8*60*60) or time == (10*60*60)) == 0:
             yfp_levels.append(protein_levels_new[4])
-
+    
+    plt.plot(range(0, 600), column(protein_levels_plot, 0), range(0, 600), column(protein_levels_plot, 1), range(0, 600), column(protein_levels_plot, 2), range(0, 600), column(protein_levels_plot, 3))
+    plt.show()
     return yfp_levels
 
 
