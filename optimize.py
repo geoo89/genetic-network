@@ -48,8 +48,11 @@ class ParamEvaluator():
         iptg = iptgatc // 2 # integer division
         atc = iptgatc % 2   # modulo
 
-        params = np.zeros(8)
-
+        params = np.zeros(10)
+        
+        for i in range(0, 7):
+            params[i] += p[i]
+        
         # if iptg is present:
         if iptg:
             params[9] += p[9]
@@ -60,12 +63,12 @@ class ParamEvaluator():
 
         # mystery stuff
         # if lacI is first:
-        if arr[3] == 'L':
-            params[2] += p[2]
+        #if arr[3] == 'L':
+        #    params[2] += p[2]
         # if lacI is right before tetR:
-        if (arr[3:4] == 'LT') or (arr[4:6] == 'LT'):
-            params[3] += p[3]
-            params[2] += p[4]
+        #if (arr[3:4] == 'LT') or (arr[4:6] == 'LT'):
+        #    params[3] += p[3]
+        #    params[2] += p[4]
 
         # at the end, return the parameters for the simulation determined by the ruleset
         return params
@@ -88,6 +91,8 @@ class ParamEvaluator():
                     # get the actual measurements for comparison
                     measurements = self.data[typeid][iptgatc]
                     # comute the quadratic difference and add it to the badness
+                    print(yfps)
+                    print(measurements)
                     badness += np.sum((yfps-measurements)**2)
         return badness
 
@@ -151,35 +156,38 @@ if __name__ == "__main__":
               
               ]
     
+    test = False
+    
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
     maxs = np.array(transpose[2])
     
     # Testing
-    plt.ion()
-    plt.subplot(221)    
-    init[8] = 0
-    init[9] = 0
-    simulate(init, plt, "None")
-    plt.subplot(222)
-    init[8] = 0.8
-    init[9] = 0
-    simulate(init, plt, "aTc")
-    plt.subplot(223)
-    init[8] = 0
-    init[9] = 0.7
-    simulate(init, plt, "IPTG")
-    plt.subplot(224)
-    init[8] = 0.8
-    init[9] = 0.7
-    simulate(init, plt, "Both")
-    plt.get_current_fig_manager().resize(1000, 800)
-    plt.tight_layout()
+    if test:
+        plt.ion()
+        plt.subplot(221)    
+        init[8] = 0
+        init[9] = 0
+        simulate(init, plt, "None", test = test)
+        plt.subplot(222)
+        init[8] = 0.2
+        init[9] = 0
+        simulate(init, plt, "aTc", test = test)
+        plt.subplot(223)
+        init[8] = 0
+        init[9] = 0.1
+        simulate(init, plt, "IPTG", test = test)
+        plt.subplot(224)
+        init[8] = 0.2
+        init[9] = 0.1
+        simulate(init, plt, "Both", test = test)
+        plt.get_current_fig_manager().resize(1000, 800)
+        plt.tight_layout()
+        sleep(10)
+    else:
+        pe = ParamEvaluator('absolute.csv')
+        optimize(pe.get_badness, init, mins, maxs)
     
-    
-    pe = ParamEvaluator('absolute.csv')
-    optimize(pe.get_badness, init, mins, maxs)
-
 
     

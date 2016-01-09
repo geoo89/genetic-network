@@ -9,7 +9,7 @@ def report_protein(protein, p, coef, i, l):
     sleep(0.01)
     
 # simulate the system with parameters p
-def simulate(p, plt = plt, title = ''):
+def simulate(p, plt = plt, title = '', test = False):
     # start with the empty list
     # these will be our hourly yfp levels
     yfp_levels = []
@@ -54,8 +54,8 @@ def simulate(p, plt = plt, title = ''):
         protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + (1 / (1 + p[7] * protein_levels[2])) * p[3]; # calculating next protein level depending on the previous ones and parameters.
         
         
-        
-        protein_levels_plot = vstack((protein_levels_plot, protein_levels_new)) 
+        if test:
+            protein_levels_plot = vstack((protein_levels_plot, protein_levels_new)) 
         
         protein_levels = protein_levels_new
         
@@ -65,19 +65,20 @@ def simulate(p, plt = plt, title = ''):
         if (time == (4*60*60) or time == (6*60*60) or time == (8*60*60) or time == (10*60*60)) == 0:
             yfp_levels.append(protein_levels_new[3])
     
-    n_rows = total_time / step
-    x = range(0, n_rows + 1)
-    plt.plot(x, protein_levels_plot[:,0], 'r', label='LacI')
-    plt.plot(x, protein_levels_plot[:,1], 'b', label='TetR')
-    plt.plot(x, protein_levels_plot[:,2], 'g', label='cI')
-    plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP')
-    plt.title(title)
-    plt.yscale('log')
-    plt.ylabel('Protein Amount [AU]')
-    plt.xlabel('time [min]')
-    
-    plt.legend(loc='lower left', shadow=True, fontsize='large')
-    plt.show()
+    if test:
+        n_rows = total_time / step
+        x = range(0, n_rows + 1)
+        plt.plot(x, protein_levels_plot[:,0], 'r', label='LacI')
+        plt.plot(x, protein_levels_plot[:,1], 'b', label='TetR')
+        plt.plot(x, protein_levels_plot[:,2], 'g', label='cI')
+        plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP')
+        plt.title(title)
+        plt.yscale('log')
+        plt.ylabel('Protein Amount [AU]')
+        plt.xlabel('time [min]')
+        
+        plt.legend(loc='lower left', shadow=True, fontsize='large')
+        plt.show()
     return yfp_levels
 
 
