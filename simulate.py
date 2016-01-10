@@ -62,7 +62,8 @@ def simulate(p, plt = plt, title = '', test = False):
         
         # if we're at a full hour, save the value
         # (that's the measured data we have and want to compare to)
-        if (time == (4*60*60) or time == (6*60*60) or time == (8*60*60) or time == (10*60*60)) == 0:
+        if (time == (4*60*60) or time == (6*60*60) or time == (8*60*60) or time == (10*60*60)):
+            #print(protein_levels_new[3])
             yfp_levels.append(protein_levels_new[3])
     
     if test:
@@ -79,6 +80,8 @@ def simulate(p, plt = plt, title = '', test = False):
         
         plt.legend(loc='lower left', shadow=True, fontsize='large')
         plt.show()
+    
+    #print(yfp_levels)
     return yfp_levels
 
 

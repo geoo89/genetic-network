@@ -60,4 +60,7 @@ target/
 # classified data
 absolute.csv
 absolute_maxchange.csv
+absolute_maxchange.ods
 wt.csv
+expected.csv
+graphs.ods
