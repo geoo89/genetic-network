@@ -65,3 +65,4 @@ wt.csv
 expected.csv
 expected2.csv
 graphs.ods
+figures/*.png

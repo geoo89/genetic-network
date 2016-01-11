@@ -19,6 +19,7 @@ class ParamEvaluator():
         self.adjdict = {'LT' : 0, 'LC' : 1, 'TC' : 2,
                         'TL' : 0, 'CL' : 1, 'CT' : 2}
         self.protdict = {'L' : 0, 'T' : 1, 'C' : 2}
+        self.plotx = list(range(4*60, 10*60+1, 2*60))
 
         # data: 3D array with yfp expression levels for each type
         # first index: typeid
@@ -112,6 +113,7 @@ class ParamEvaluator():
     def get_badness(self, p, method, debug):
         # this is the value that will accumulate the deviation from the measurements
         badness_total = 0.0
+        badnesses = []
         # for all 48x4 possible setups
         for typeid in range(self.strain_count):
             badness = 0.0
@@ -137,12 +139,21 @@ class ParamEvaluator():
             badness_total += badness
             if debug >= 2:
                 print("%s: %f" % (self.types[typeid], badness))
+                if debug >= 3:
+                    badnesses.append(badness)
 
+        if debug >= 3:
+            return badness_total, badnesses
         return badness_total
 
     def get_type(self, typeid):
         return self.types[typeid]
 
+
+    def plot_measurement(self, typeid, iptgatc):
+        if self.valids[typeid]:
+            plt.plot(self.plotx, self.data[typeid][iptgatc], 'orange', label='YFP measured', linewidth=2.0)
+    
 
 # func is the function we want to optimize
 # init is the array of initial values of the parameters
@@ -206,7 +217,7 @@ if __name__ == "__main__":
               (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
               (     1,  0.01,     2), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
               (   0.5,   0.0,     1), # 12 mystery effect of supercoiling (two genes facing each other)
-              (   1.0,   0.5,   1.2)  # 13 mystery effect of being in first position (next to kanamycin resistence)
+              (   0.0,  -0.5,   0.2)  # 13 mystery effect of being in first position (next to kanamycin resistence)
               ]
     
     #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
@@ -214,7 +225,7 @@ if __name__ == "__main__":
     measurement_file = 'absolute.csv';
     #measurement_file = 'expected2.csv';
     #measurement_file = 'wt.csv';
-    run_optization = True
+    run_optization = False
     #method = 0 # quad diff
     #method = 1 # ratio-log
     method = 2 # linear diff
@@ -233,7 +244,8 @@ if __name__ == "__main__":
                     (0.643717, 0.500000, 1.000000),
                     (0.044964, 0.000000, 1.000000),
                     (1.031398, 0.010000, 2.000000),
-                    (0.966240, 0.000000, 1.000000)]
+                    (0.966240, 0.000000, 1.000000),
+                    (0.000000,-0.500000, 0.200000)]
         params = [(0.055431, 0.000000, 0.200000),  # badness: 6857086.976968 adjusted to: absolute.csv
                     (761.066718, 40.000000, 10000.000000),
                     (7739.050840, 40.000000, 10000.000000),
@@ -246,7 +258,8 @@ if __name__ == "__main__":
                     (0.760173, 0.500000, 1.000000),
                     (0.450252, 0.000000, 1.000000),
                     (0.179741, 0.010000, 2.000000),
-                    (0.813581, 0.000000, 1.000000)]
+                    (0.813581, 0.000000, 1.000000),
+                    (0.000000,-0.500000, 0.200000)]
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
@@ -272,16 +285,23 @@ if __name__ == "__main__":
 
     # plot graphs for the simulation
     titles = ['None', 'aTc', 'IPTG', 'Both']
-    pe.get_badness(init, 2, debug = 2)
-    for type in range(1):
-        plt.figure()
-        plt.suptitle(pe.get_type(type), fontsize=18)
+    bd, bdlist = pe.get_badness(init, 2, debug = 3)
+    for typeid in range(48):
+        plt.figure(figsize=(12.0, 8.0))
+        plt.suptitle("%s, badness: %.2f" % (pe.get_type(typeid), bdlist[typeid]), fontsize=18)
         for iptgatc in range(4):
             pos = 221 + iptgatc
             plt.subplot(pos)
-            applied_params = pe.apply_ruleset(init, type, iptgatc)
-            simulate(applied_params, titles[iptgatc], test = True)
-            plt.get_current_fig_manager().resize(1000, 800)
-            plt.tight_layout()
-        plt.show()
-        #plt.savefig(type + ".png")
+            applied_params = pe.apply_ruleset(init, typeid, iptgatc)
+            simulate(applied_params, plot = True)
+            pe.plot_measurement(typeid, iptgatc)
+            plt.title(titles[iptgatc])
+            plt.yscale('log')
+            plt.ylim([1, 100000])
+            plt.ylabel('Protein Amount [AU]')
+            plt.xlabel('time [min]')
+            plt.legend(loc='lower right', shadow=True, fontsize='large')
+        plt.get_current_fig_manager().resize(1000, 800)
+        plt.tight_layout()
+        #plt.show()
+        plt.savefig("figures/%s.png" % pe.get_type(typeid))
