@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from numpy import vstack, size
 from time import sleep
+from math import exp
 
 def report_protein(protein, p, coef, i, l):
     print("Current: {} Degrad Coeff: {} Degrad: {} Coef: {} New: {} ".format(protein[i], p[0], p[0] * protein[i], coef, coef * p[l]))
@@ -19,7 +20,7 @@ def simulate(p, title = '', test = False):
     protein_levels_plot = np.zeros((0, 4))
     
     total_time = 10*60*60 + 1
-    step = 1*60
+    step = 60
     # here time increases in 60 second steps.
     # you'll probably want that to be more fine-grained
     for time in range(0, total_time, step):
@@ -30,28 +31,32 @@ def simulate(p, title = '', test = False):
         
         # These terms act on the default gene expression of the corresponding genes.
         lacI_inh_lacI = p[9] + (1 - p[9]) / (1 + p[4] * protein_levels[0])
-        
         lacI_inh_tetR = p[9] + (1 - p[9]) / (1 + p[5] * protein_levels[0])
-        
-        tetR_inh_cI = p[8] + (1 - p[8]) / (1 + p[6] * protein_levels[1])
-        
+        tetR_inh_cI   = p[8] + (1 - p[8]) / (1 + p[6] * protein_levels[1])
+        cI_inh_YFP    =         1         / (1 + p[7] * protein_levels[2])
         LT_IPTG_inh_TetR = p[10] # See if this value was set. This applies to the qPCR data where TetR is drastically repressed by IPTG.
+        IPTG_aTc_IFXNOR_inh_TetR = p[11] # See if this value was set. This applies to the IF and XNOR observations where IPTG can change if added with aTc and cI is not in the middle.        
         
-        IPTG_aTc_IFXNOR_inh_TetR = p[11] # See if this value was set. This applies to the IF and XNOR observations where IPTG can change if added with aTc and cI is not in the middle.
-        
-        cI_inh_YFP = 1 / (1 + p[7] * protein_levels[2])
-        
-        # LacI
-        # First term is previous protein amount
-        # Second term is protein degradation depending on current amount
-        # Third term is LacI inhibition on LacI default gene expression, depending on LacI amount
-        protein_levels_new[0] = protein_levels[0] + p[0] * protein_levels[0] + lacI_inh_lacI * p[2];
-        #TetR
-        protein_levels_new[1] = protein_levels[1] + p[0] * protein_levels[1] + IPTG_aTc_IFXNOR_inh_TetR * LT_IPTG_inh_TetR * lacI_inh_tetR * p[2]; # calculating next protein level depending on the previous ones and parameters.
-        #λcI
-        protein_levels_new[2] = protein_levels[2] + p[0] * protein_levels[2] + tetR_inh_cI * p[3]; # calculating next protein level depending on the previous ones and parameters.
-        #YFP
-        protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + cI_inh_YFP * p[1]; # calculating next protein level depending on the previous ones and parameters.
+
+        lacI_production = lacI_inh_lacI * p[2]
+        tetR_production = IPTG_aTc_IFXNOR_inh_TetR * LT_IPTG_inh_TetR * lacI_inh_tetR * p[2]
+        cI_production   = tetR_inh_cI * p[3]
+        YFP_production  = cI_inh_YFP * p[1]
+
+        # supercoiling
+        lacI_factor = 1 - p[12] * (1 - exp(- (lacI_production * tetR_production) / 1e6))
+        tetR_factor = 1 - p[12] * (1 - exp(- (lacI_production * cI_production) / 1e6))
+        cI_factor =   1 - p[12] * (1 - exp(- (tetR_production * cI_production) / 1e6))
+
+        # First term is previous protein amount taking into account protein degradation
+        # LacI # Second term is LacI inhibition on LacI default gene expression, depending on LacI amount
+        protein_levels_new[0] = (1 - p[0]) * protein_levels[0] + lacI_production * lacI_factor
+        #TetR # calculating next protein level depending on the previous ones and parameters.
+        protein_levels_new[1] = (1 - p[0]) * protein_levels[1] + tetR_production * tetR_factor
+        #λcI # calculating next protein level depending on the previous ones and parameters.
+        protein_levels_new[2] = (1 - p[0]) * protein_levels[2] + cI_production * cI_factor
+        #YFP # calculating next protein level depending on the previous ones and parameters.
+        protein_levels_new[3] = (1 - p[0] / 3) * protein_levels[3] + YFP_production
         
         
         if test:
@@ -79,7 +84,7 @@ def simulate(p, title = '', test = False):
         plt.ylabel('Protein Amount [AU]')
         plt.xlabel('time [min]')
         
-        plt.legend(loc='lower left', shadow=True, fontsize='large')
+        plt.legend(loc='lower right', shadow=True, fontsize='large')
         #plt.show()
     
     #print(yfp_levels)

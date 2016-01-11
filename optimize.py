@@ -15,6 +15,10 @@ class ParamEvaluator():
         self.types = []
         # if the type was clonable
         self.valids = []
+        # all the 6 different adjacencies are assigned a number
+        self.adjdict = {'LT' : 0, 'LC' : 1, 'TC' : 2,
+                        'TL' : 0, 'CL' : 1, 'CT' : 2}
+
         # data: 3D array with yfp expression levels for each type
         # first index: typeid
         # second index: 0, 1, 2 or 3 for wo, atc, iptg, both
@@ -48,12 +52,12 @@ class ParamEvaluator():
     
     @staticmethod
     def apply_ruleset(p, typeid, iptgatc):
-        orient = typeid[0:2]
+        orient = typeid[0:3]
         arr = typeid[3:6]
         iptg = iptgatc // 2 # integer division
         atc = iptgatc % 2   # modulo
 
-        params = np.zeros(len(p))
+        params = np.zeros(15)
         params[10] = 1
         params[11] = 1
         
@@ -72,6 +76,12 @@ class ParamEvaluator():
             if iptg:
                 if arr[2] != 'C':
                     params[11] = p[11]
+
+        # supercoiling penalty for genes facing each other
+        if orient[0:2] == 'FR':
+            params[12 + self.adjdict[arr[0:2]]] += p[12]
+        if orient[1:3] == 'FR':
+            params[12 + self.adjdict[arr[1:3]]] += p[12]
         
         # mystery stuff
         # if lacI is first:
@@ -171,7 +181,7 @@ def optimize(func, init, mins, maxs, method, debug):
 
 if __name__ == "__main__":
               # init, min, max
-    params = [( -0.02,  -0.2,     0), # 0 Protein degradation:
+    params = [(  0.02,     0,    0.2), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
               (   234,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
@@ -186,31 +196,34 @@ if __name__ == "__main__":
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
               (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
               (     1,  0.01,     2), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
-              (     1,   0.1,    10)  # 12 mystery effect of supercoiling
+              (   0.5,   0.0,     1)  # 12 mystery effect of supercoiling (two genes facing each other)
               ]
-    # Parameters optimized to the expected phenotype (all atc- phenotypes)
-    params_opt = [(-0.053029, -0.200000, 0.000000),  # badness: 62261.739628 adjusted to: expected2.csv
-            (6054.332267, 0.000000, 10000.000000),
-            (5319.984618, 0.000000, 10000.000000),
-            (2056.505992, 0.000000, 10000.000000),
-            (12.490371, 0.000000, 40.000000),
-            (0.000000, 0.000000, 40.000000),
-            (34.464252, 0.000000, 100.000000),
-            (87.891989, 0.000000, 100.000000),
-            (0.775616, 0.500000, 1.000000),
-            (0.935231, 0.500000, 1.000000),
-            (0.745789, 0.000000, 1.000000),
-            (1.464314, 0.010000, 2.000000)]
     
-    all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
-    #all_types = ["FFFCLT"]
+    #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
+    all_types = ["FFFCLT"]
     #measurement_file = 'absolute.csv';
     measurement_file = 'expected2.csv';
     #measurement_file = 'wt.csv';
-    run_optization = True
+    run_optization = False
     #method = 0 # quad diff
     #method = 1 # ratio-log
     method = 2 # linear diff
+
+    if not run_optization:
+        # Parameters optimized to the expected phenotype (all atc- phenotypes)
+        params = [(0.083046, 0.000000, 0.200000),  # badness: 147812.035937 adjusted to: expected2.csv
+                    (1233.563963, 0.000000, 10000.000000),
+                    (673.542274, 0.000000, 10000.000000),
+                    (1.254526, 0.000000, 10000.000000),
+                    (1.245438, 0.000000, 40.000000),
+                    (0.306181, 0.000000, 40.000000),
+                    (51.976855, 0.000000, 100.000000),
+                    (92.996234, 0.000000, 100.000000),
+                    (0.946784, 0.500000, 1.000000),
+                    (0.643717, 0.500000, 1.000000),
+                    (0.044964, 0.000000, 1.000000),
+                    (1.031398, 0.010000, 2.000000),
+                    (0.966240, 0.000000, 1.000000)]
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
