@@ -225,7 +225,7 @@ if __name__ == "__main__":
     measurement_file = 'expected.csv';
     #measurement_file = 'wt.csv';
     #test = False
-    test = False
+    test = True
     #method = 0 # quad diff
     #method = 1 # ratio-log
     method = 2 # linear diff
@@ -237,7 +237,7 @@ if __name__ == "__main__":
     # Testing
     if test:
         for type in all_types:
-            plt.ion()
+            plt.figure(1)
             for iptgatc in range(4):
                 pos = 221 + iptgatc
                 plt.subplot(pos)
@@ -253,8 +253,8 @@ if __name__ == "__main__":
                 applied_params = ParamEvaluator.apply_ruleset(init, type, iptgatc)
                 simulate(applied_params, title, test = test)
                 plt.get_current_fig_manager().resize(1000, 800)
-                plt.tight_layout()
-            sleep(10)
+                #plt.tight_layout()
+            plt.show()
     else:
         pe = ParamEvaluator(measurement_file)
         optimize(pe.get_badness, init, mins, maxs, method, measurement_file)

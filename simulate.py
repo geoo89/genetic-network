@@ -65,7 +65,7 @@ def simulate(p, title = '', test = False):
     
     if test:
         n_rows = total_time / step
-        x = range(0, n_rows + 1)
+        x = range(0, int(n_rows) + 1)
         plt.plot(x, protein_levels_plot[:,0], 'r', label='LacI')
         plt.plot(x, protein_levels_plot[:,1], 'b', label='TetR')
         plt.plot(x, protein_levels_plot[:,2], 'g', label='cI')
@@ -76,7 +76,7 @@ def simulate(p, title = '', test = False):
         plt.xlabel('time [min]')
         
         plt.legend(loc='lower left', shadow=True, fontsize='large')
-        plt.show()
+        #plt.show()
     
     #print(yfp_levels)
     return yfp_levels
