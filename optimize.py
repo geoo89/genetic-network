@@ -254,7 +254,7 @@ if __name__ == "__main__":
                 simulate(applied_params, title, test = test)
                 #plt.get_current_fig_manager().resize
                 plt.tight_layout()
-            
+            plt.show()
     else:
         pe = ParamEvaluator(measurement_file)
         optimize(pe.get_badness, init, mins, maxs, method, measurement_file)

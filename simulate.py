@@ -28,6 +28,7 @@ def simulate(p, title = '', test = False):
         #params p needs to be decided and defined (e.g. first parameter is repressive effect of LacI on TetR)
         protein_levels_new = np.zeros(4)
         
+        # These terms act on the default gene expression of the corresponding genes.
         lacI_inh_lacI = p[9] + (1 - p[9]) / (1 + p[4] * protein_levels[0])
         
         lacI_inh_tetR = p[9] + (1 - p[9]) / (1 + p[5] * protein_levels[0])
@@ -37,6 +38,8 @@ def simulate(p, title = '', test = False):
         LT_IPTG_inh_TetR = p[10] # See if this value was set. This applies to the qPCR data where TetR is drastically repressed by IPTG.
         
         IPTG_aTc_IFXNOR_inh_TetR = p[11] # See if this value was set. This applies to the IF and XNOR observations where IPTG can change if added with aTc and cI is not in the middle.
+        
+        cI_inh_YFP = 1 / (1 + p[7] * protein_levels[2])
         
         # LacI
         # First term is previous protein amount
@@ -48,7 +51,7 @@ def simulate(p, title = '', test = False):
         #λcI
         protein_levels_new[2] = protein_levels[2] + p[0] * protein_levels[2] + tetR_inh_cI * p[3]; # calculating next protein level depending on the previous ones and parameters.
         #YFP
-        protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + (p[7] + (1 - p[7]) / (1 + p[7] * protein_levels[2])) * p[1]; # calculating next protein level depending on the previous ones and parameters.
+        protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + cI_inh_YFP * p[1]; # calculating next protein level depending on the previous ones and parameters.
         
         
         if test:
@@ -65,7 +68,7 @@ def simulate(p, title = '', test = False):
     
     if test:
         n_rows = total_time / step
-        x = range(0, n_rows + 1)
+        x = range(0, int(n_rows) + 1)
         plt.plot(x, protein_levels_plot[:,0], 'r', label='LacI')
         plt.plot(x, protein_levels_plot[:,1], 'b', label='TetR')
         plt.plot(x, protein_levels_plot[:,2], 'g', label='cI')
@@ -76,7 +79,7 @@ def simulate(p, title = '', test = False):
         plt.xlabel('time [min]')
         
         plt.legend(loc='lower left', shadow=True, fontsize='large')
-        plt.show()
+        #plt.show()
     
     #print(yfp_levels)
     return yfp_levels
