@@ -18,6 +18,7 @@ class ParamEvaluator():
         # all the 6 different adjacencies are assigned a number
         self.adjdict = {'LT' : 0, 'LC' : 1, 'TC' : 2,
                         'TL' : 0, 'CL' : 1, 'CT' : 2}
+        self.protdict = {'L' : 0, 'T' : 1, 'C' : 2}
 
         # data: 3D array with yfp expression levels for each type
         # first index: typeid
@@ -62,7 +63,7 @@ class ParamEvaluator():
         iptg = iptgatc // 2 # integer division
         atc = iptgatc % 2   # modulo
 
-        params = np.zeros(15)
+        params = np.zeros(18)
         params[10] = 1
         params[11] = 1
         
@@ -79,7 +80,7 @@ class ParamEvaluator():
         if atc:
             params[8] += p[8]
             if iptg:
-                if arr[2] != 'C':
+                if arr[1] != 'C':
                     params[11] = p[11]
 
         # supercoiling penalty for genes facing each other
@@ -88,6 +89,11 @@ class ParamEvaluator():
         if orient[1:3] == 'FR':
             params[12 + self.adjdict[arr[1:3]]] += p[12]
         
+        # first gene is forward oriented -> penalty
+        if orient[0] == 'F':
+            params[15 + self.protdict[arr[0]]] += p[13]
+
+
         # mystery stuff
         # if lacI is first:
         #if arr[3] == 'L':
@@ -103,11 +109,12 @@ class ParamEvaluator():
 
     # get_badness is the function we want to optimize
     # p is its list (array) of parameters to compute the badness for
-    def get_badness(self, p, method):
+    def get_badness(self, p, method, debug):
         # this is the value that will accumulate the deviation from the measurements
-        badness = 0.0
+        badness_total = 0.0
         # for all 48x4 possible setups
         for typeid in range(self.strain_count):
+            badness = 0.0
             # only simulate the cloneable arrangements
             if self.valids[typeid] == True:
                 for iptgatc in range(4):
@@ -127,8 +134,14 @@ class ParamEvaluator():
                         badness += np.sum(np.abs(np.log10(yfps) - np.log10(measurements)))
                     elif method == 2:
                         badness += np.sum(abs(yfps-measurements))
-                        
-        return badness
+            badness_total += badness
+            if debug >= 2:
+                print("%s: %f" % (self.types[typeid], badness))
+
+        return badness_total
+
+    def get_type(self, typeid):
+        return self.types[typeid]
 
 
 # func is the function we want to optimize
@@ -146,9 +159,9 @@ def optimize(func, init, mins, maxs, method, debug):
     vals = init
     # temp is the heat/temperature, determining how far we may vary
     # when picking the next set of parameters to try
-    temp = 0.2
+    temp = 0.4
     # initial badness for the initial parameters
-    badness = func(vals, method)
+    badness = func(vals, method, debug)
     print("%f @ temp %f: %s" % (badness, 0.21, str(vals)))
     badness_new = 0.0
     while temp > 0.0005:
@@ -161,15 +174,15 @@ def optimize(func, init, mins, maxs, method, debug):
         vals_new = np.maximum(vals_new, mins)
         vals_new = np.minimum(vals_new, maxs)
         # compute the new badness
-        badness_new = func(vals_new, method)
+        badness_new = func(vals_new, method, debug)
         # pick the new set of values if they are better
         if badness_new < badness:
             badness = badness_new
             vals = vals_new
-            if debug:
+            if debug >= 1:
                 print("%f @ temp %f: %s" % (badness_new, temp, str(vals_new)))
         # reduce the temperature
-        temp -= 0.001
+        temp -= 0.002
 
     return badness, vals
     
@@ -177,26 +190,27 @@ def optimize(func, init, mins, maxs, method, debug):
 
 if __name__ == "__main__":
               # init, min, max
-    params = [(  0.02,     0,    0.2), # 0 Protein degradation:
+    params = [(  0.02,     0,   0.2), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
-              (   234,    40, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
+              (   234,    40,  3000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
               # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
-              (   200,    40, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
-              (   200,    40, 10000), # 3 PTet Needs to be explored. 
-              (     6,     0,    40), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
-              (   5.9,     0,    40), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
+              (   200,    40,  3000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
+              (   200,    40,  3000), # 3 PTet Needs to be explored. 
+              (  0.05,  1e-5,   0.1), # 4 inverse repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
+              (  0.05,  1e-5,   0.1), # 5 inverse repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
               (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
               (   100,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
               (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
               (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
               (     1,  0.01,     2), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
-              (   0.5,   0.0,     1)  # 12 mystery effect of supercoiling (two genes facing each other)
+              (   0.5,   0.0,     1), # 12 mystery effect of supercoiling (two genes facing each other)
+              (   1.0,   0.5,   1.2)  # 13 mystery effect of being in first position (next to kanamycin resistence)
               ]
     
     #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
-    all_types = ["FFFCLT"]
+    all_types = [0]
     measurement_file = 'absolute.csv';
     #measurement_file = 'expected2.csv';
     #measurement_file = 'wt.csv';
@@ -220,6 +234,19 @@ if __name__ == "__main__":
                     (0.044964, 0.000000, 1.000000),
                     (1.031398, 0.010000, 2.000000),
                     (0.966240, 0.000000, 1.000000)]
+        params = [(0.055431, 0.000000, 0.200000),  # badness: 6857086.976968 adjusted to: absolute.csv
+                    (761.066718, 40.000000, 10000.000000),
+                    (7739.050840, 40.000000, 10000.000000),
+                    (9703.099295, 40.000000, 10000.000000),
+                    (0.010490, 0.000000, 40.000000),
+                    (0.010000, 0.000000, 40.000000),
+                    (70.148061, 0.000000, 100.000000),
+                    (22.136042, 0.000000, 100.000000),
+                    (0.800482, 0.500000, 1.000000),
+                    (0.760173, 0.500000, 1.000000),
+                    (0.450252, 0.000000, 1.000000),
+                    (0.179741, 0.010000, 2.000000),
+                    (0.813581, 0.000000, 1.000000)]
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
@@ -228,7 +255,7 @@ if __name__ == "__main__":
 
     pe = ParamEvaluator(measurement_file)
     if run_optization:
-        badness, vals = optimize(pe.get_badness, init, mins, maxs, method, debug = True)
+        badness, vals = optimize(pe.get_badness, init, mins, maxs, method, debug = 1)
 
         print("Best badness: %f" % badness)
         print("Parameters: %s" % str(vals))
@@ -237,7 +264,7 @@ if __name__ == "__main__":
             if i == 0:
                 print("params_opt = [(%f, %f, %f),  # badness: %f adjusted to: %s" % (vals[i], mins[i], maxs[i], badness, measurement_file))
             elif (i != 0) and (i < (len(init) - 1)):
-                print("\t\t\t(%f, %f, %f)," % (vals[i], mins[i], maxs[i]))
+                print("\t\t\t(%f, %f, %f), #%d" % (vals[i], mins[i], maxs[i], i))
             else:
                 print("\t\t\t(%f, %f, %f)]" % (vals[i], mins[i], maxs[i]))
 
@@ -245,9 +272,10 @@ if __name__ == "__main__":
 
     # plot graphs for the simulation
     titles = ['None', 'aTc', 'IPTG', 'Both']
-    for type in all_types:
+    pe.get_badness(init, 2, debug = 2)
+    for type in range(1):
         plt.figure()
-        plt.suptitle(type, fontsize=18)
+        plt.suptitle(pe.get_type(type), fontsize=18)
         for iptgatc in range(4):
             pos = 221 + iptgatc
             plt.subplot(pos)

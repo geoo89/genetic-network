@@ -38,9 +38,9 @@ def simulate(p, title = '', test = False):
         IPTG_aTc_IFXNOR_inh_TetR = p[11] # See if this value was set. This applies to the IF and XNOR observations where IPTG can change if added with aTc and cI is not in the middle.        
         
 
-        lacI_production = lacI_inh_lacI * p[2]
-        tetR_production = IPTG_aTc_IFXNOR_inh_TetR * LT_IPTG_inh_TetR * lacI_inh_tetR * p[2]
-        cI_production   = tetR_inh_cI * p[3]
+        lacI_production = lacI_inh_lacI * p[2] * p[15]
+        tetR_production = IPTG_aTc_IFXNOR_inh_TetR * LT_IPTG_inh_TetR * lacI_inh_tetR * p[2] * p[16]
+        cI_production   = tetR_inh_cI * p[3] * p[17]
         YFP_production  = cI_inh_YFP * p[1]
 
         # supercoiling
