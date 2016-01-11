@@ -64,12 +64,14 @@ class ParamEvaluator():
         iptg = iptgatc // 2 # integer division
         atc = iptgatc % 2   # modulo
 
-        params = np.zeros(18)
+        params = np.zeros(19)
         params[10] = 1
         params[11] = 1
         
         for i in range(0, 8):
             params[i] += p[i]
+        # second supercoiling param
+        params[18] += p[13]
         
         # if iptg is present:
         if iptg:
@@ -89,10 +91,22 @@ class ParamEvaluator():
             params[12 + self.adjdict[arr[0:2]]] += p[12]
         if orient[1:3] == 'FR':
             params[12 + self.adjdict[arr[1:3]]] += p[12]
-        
+
+        # # inverse supercoiling effect for genes facing away from each other
+        # if orient[0:2] == 'RF':
+        #     params[12 + self.adjdict[arr[0:2]]] += p[14]
+        # if orient[1:3] == 'RF':
+        #     params[12 + self.adjdict[arr[1:3]]] += p[14]
+
         # first gene is forward oriented -> penalty
         if orient[0] == 'F':
-            params[15 + self.protdict[arr[0]]] += p[13]
+            params[15 + self.protdict[arr[0]]] += p[15]
+        if orient[0] == 'R':
+            params[15 + self.protdict[arr[0]]] += p[16]
+        if orient[2] == 'F':
+            params[15 + self.protdict[arr[2]]] += p[17]
+        if orient[2] == 'R':
+            params[15 + self.protdict[arr[2]]] += p[18]
 
 
         # mystery stuff
@@ -136,6 +150,9 @@ class ParamEvaluator():
                         badness += np.sum(np.abs(np.log10(yfps) - np.log10(measurements)))
                     elif method == 2:
                         badness += np.sum(abs(yfps-measurements))
+                    elif method == 3:
+                        yfps = np.maximum(yfps, np.add(np.zeros(4), 0.000001))
+                        badness += np.sum(np.exp(np.abs(np.log10(yfps) - np.log10(measurements))))
             badness_total += badness
             if debug >= 2:
                 print("%s: %f" % (self.types[typeid], badness))
@@ -201,7 +218,7 @@ def optimize(func, init, mins, maxs, method, debug):
 
 if __name__ == "__main__":
               # init, min, max
-    params = [(  0.02,     0,   0.2), # 0 Protein degradation:
+    params = [(  0.02,  1e-3,   0.2), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
               (   234,    40,  3000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
@@ -215,23 +232,25 @@ if __name__ == "__main__":
               (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
               (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
-              (     1,  0.01,     2), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
+              (     1,   0.5,   1.2), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
               (   0.5,   0.0,     1), # 12 mystery effect of supercoiling (two genes facing each other)
-              (   0.0,  -0.5,   0.2)  # 13 mystery effect of being in first position (next to kanamycin resistence)
-              ]
+              (   1e6  , 5e5,   2e7), # 13 -> 18 mystery effect param 2 of supercoiling (two genes facing each other)
+              (   0.5,  -0.2,   0.5), # 14 NOT USED mystery effect of inverse supercoiling (two genes facing away from each other)
+              (   0.0,  -0.5,   0.2), # 15 mystery effect of being forward in first position (next to kanamycin resistence)
+              (   0.0,  -0.5,   0.2), # 16 mystery effect of being backwd  in first position (next to kanamycin resistence)
+              (   0.0,  -0.5,   0.2), # 17 mystery effect of being forward in last  position
+              (   0.0,  -0.5,   0.2)] # 18 mystery effect of being backwd  in last  position
     
-    #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
-    all_types = [0]
-    measurement_file = 'absolute.csv';
-    #measurement_file = 'expected2.csv';
-    #measurement_file = 'wt.csv';
-    run_optization = False
+    measurement_file = 'absolute.csv'
+    #measurement_file = 'expected2.csv'
+    run_optization = True
     #method = 0 # quad diff
     #method = 1 # ratio-log
     method = 2 # linear diff
+    #method = 3 # exponential ratio-log
 
     if not run_optization:
-        # Parameters optimized to the expected phenotype (all atc- phenotypes)
+        # Parameters optimized to the expected phenotype of FFFCTL
         params = [(0.083046, 0.000000, 0.200000),  # badness: 147812.035937 adjusted to: expected2.csv
                     (1233.563963, 0.000000, 10000.000000),
                     (673.542274, 0.000000, 10000.000000),
@@ -245,7 +264,13 @@ if __name__ == "__main__":
                     (0.044964, 0.000000, 1.000000),
                     (1.031398, 0.010000, 2.000000),
                     (0.966240, 0.000000, 1.000000),
-                    (0.000000,-0.500000, 0.200000)]
+                    (   1e6  , 2e5,   5e6), # 13 mystery effect param 2 of supercoiling (two genes facing each other)
+                    (   0.5,  -0.2,   0.5), # 14 NOT USED mystery effect of inverse supercoiling (two genes facing away from each other)
+                    (   0.0,  -0.5,   0.2), # 15 mystery effect of being forward in first position (next to kanamycin resistence)
+                    (   0.0,  -0.5,   0.2), # 16 mystery effect of being backwd  in first position (next to kanamycin resistence)
+                    (   0.0,  -0.5,   0.2), # 17 mystery effect of being forward in last  position
+                    (   0.0,  -0.5,   0.2)] # 18 mystery effect of being backwd  in last  position
+        # Parameters optimized to the expected phenotype of all types
         params = [(0.055431, 0.000000, 0.200000),  # badness: 6857086.976968 adjusted to: absolute.csv
                     (761.066718, 40.000000, 10000.000000),
                     (7739.050840, 40.000000, 10000.000000),
@@ -259,7 +284,13 @@ if __name__ == "__main__":
                     (0.450252, 0.000000, 1.000000),
                     (0.179741, 0.010000, 2.000000),
                     (0.813581, 0.000000, 1.000000),
-                    (0.000000,-0.500000, 0.200000)]
+                    (   1e6  , 2e5,   5e7), # 13 mystery effect param 2 of supercoiling (two genes facing each other)
+                    (   0.5,  -0.2,   0.5), # 14 NOT USED mystery effect of inverse supercoiling (two genes facing away from each other)
+                    (   0.0,  -0.5,   0.2), # 15 mystery effect of being forward in first position (next to kanamycin resistence)
+                    (   0.0,  -0.5,   0.2), # 16 mystery effect of being backwd  in first position (next to kanamycin resistence)
+                    (   0.0,  -0.5,   0.2), # 17 mystery effect of being forward in last  position
+                    (   0.0,  -0.5,   0.2)] # 18 mystery effect of being backwd  in last  position
+
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
@@ -285,7 +316,7 @@ if __name__ == "__main__":
 
     # plot graphs for the simulation
     titles = ['None', 'aTc', 'IPTG', 'Both']
-    bd, bdlist = pe.get_badness(init, 2, debug = 3)
+    bd, bdlist = pe.get_badness(init, method, debug = 3)
     for typeid in range(48):
         plt.figure(figsize=(12.0, 8.0))
         plt.suptitle("%s, badness: %.2f" % (pe.get_type(typeid), bdlist[typeid]), fontsize=18)
@@ -305,3 +336,4 @@ if __name__ == "__main__":
         plt.tight_layout()
         #plt.show()
         plt.savefig("figures/%s.png" % pe.get_type(typeid))
+        plt.close()

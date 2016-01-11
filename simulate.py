@@ -44,9 +44,9 @@ def simulate(p, plot = False):
         YFP_production  = cI_inh_YFP * p[1]
 
         # supercoiling
-        lacI_factor = 1 - p[12] * (1 - exp(- (lacI_production * tetR_production) / 1e6))
-        tetR_factor = 1 - p[12] * (1 - exp(- (lacI_production * cI_production) / 1e6))
-        cI_factor =   1 - p[12] * (1 - exp(- (tetR_production * cI_production) / 1e6))
+        lacI_factor = 1 - p[12] * (1 - exp(- (lacI_production * tetR_production) / p[18]))
+        tetR_factor = 1 - p[12] * (1 - exp(- (lacI_production * cI_production) / p[18]))
+        cI_factor =   1 - p[12] * (1 - exp(- (tetR_production * cI_production) / p[18]))
 
         # First term is previous protein amount taking into account protein degradation
         # LacI # Second term is LacI inhibition on LacI default gene expression, depending on LacI amount
