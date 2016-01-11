@@ -146,7 +146,7 @@ def optimize(func, init, mins, maxs, method, debug):
     vals = init
     # temp is the heat/temperature, determining how far we may vary
     # when picking the next set of parameters to try
-    temp = 0.2
+    temp = 0.4
     # initial badness for the initial parameters
     badness = func(vals, method)
     print("%f @ temp %f: %s" % (badness, 0.21, str(vals)))
@@ -170,24 +170,23 @@ def optimize(func, init, mins, maxs, method, debug):
                 print("%f @ temp %f: %s" % (badness_new, temp, str(vals_new)))
         # reduce the temperature
         temp -= 0.001
-
     return badness, vals
     
 
 
 if __name__ == "__main__":
               # init, min, max
-    params = [(  0.02,     0,    0.2), # 0 Protein degradation:
+    params = [(  0.02, 0.001,    0.2), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
               (   234,    40, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
               # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
               (   200,    40, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
               (   200,    40, 10000), # 3 PTet Needs to be explored. 
-              (     6,     0,    40), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
-              (   5.9,     0,    40), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
-              (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
-              (   100,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
+              (  0.05,  1e-5,   0.1), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
+              (  0.05,  1e-5,   0.1), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
+              (    50,     5,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
+              (   100,     5,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
               (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
               (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
@@ -196,7 +195,7 @@ if __name__ == "__main__":
               ]
     
     #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
-    all_types = ["FFFCLT"]
+    all_types = [0]
     measurement_file = 'absolute.csv';
     #measurement_file = 'expected2.csv';
     #measurement_file = 'wt.csv';
@@ -207,12 +206,12 @@ if __name__ == "__main__":
 
     if not run_optization:
         # Parameters optimized to the expected phenotype (all atc- phenotypes)
-        params = [(0.083046, 0.000000, 0.200000),  # badness: 147812.035937 adjusted to: expected2.csv
-                    (1233.563963, 0.000000, 10000.000000),
-                    (673.542274, 0.000000, 10000.000000),
-                    (1.254526, 0.000000, 10000.000000),
-                    (6.245438, 0.000000, 40.000000),
-                    (6.306181, 0.000000, 40.000000),
+        params = [(0.083046, 0.000000, 0.100000),  # badness: 147812.035937 adjusted to: expected2.csv
+                    (1233.563963, 0.000000, 3000.000000),
+                    (673.542274, 0.000000, 3000.000000),
+                    (1.254526, 0.000000, 3000.000000),
+                    (    0.05,      1e-5, 40.000000),
+                    (    0.05,      1e-5, 40.000000),
                     (51.976855, 0.000000, 100.000000),
                     (92.996234, 0.000000, 100.000000),
                     (0.946784, 0.500000, 1.000000),
@@ -220,6 +219,22 @@ if __name__ == "__main__":
                     (0.044964, 0.000000, 1.000000),
                     (1.031398, 0.010000, 2.000000),
                     (0.966240, 0.000000, 1.000000)]
+        
+
+        params_opt = [(0.003831, 0.001000, 0.200000),  # badness: 6278389.546899 adjusted to: absolute.csv
+            (4300.051621, 40.000000, 10000.000000),
+            (6529.613055, 40.000000, 10000.000000),
+            (40.000000, 40.000000, 10000.000000),
+            (0.036860, 0.000010, 0.100000),
+            (0.041289, 0.000010, 0.100000),
+            (5.000000, 5.000000, 100.000000),
+            (5.000000, 5.000000, 100.000000),
+            (0.910836, 0.500000, 1.000000),
+            (0.870547, 0.500000, 1.000000),
+            (0.000000, 0.000000, 1.000000),
+            (0.010000, 0.010000, 2.000000),
+            (0.815031, 0.000000, 1.000000)]
+        
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
