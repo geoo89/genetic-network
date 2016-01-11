@@ -185,7 +185,8 @@ if __name__ == "__main__":
               (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
               (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
-              (     1,  0.01,     2)  # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
+              (     1,  0.01,     2), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
+              (     1,   0.1,    10)  # 12 mystery effect of supercoiling
               ]
     # Parameters optimized to the expected phenotype (all atc- phenotypes)
     params_opt = [(-0.053029, -0.200000, 0.000000),  # badness: 62261.739628 adjusted to: expected2.csv
