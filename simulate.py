@@ -28,18 +28,23 @@ def simulate(p, plt = plt, title = '', test = False):
         #params p needs to be decided and defined (e.g. first parameter is repressive effect of LacI on TetR)
         protein_levels_new = np.zeros(4)
         
-        lacI_inh_lacI = p[9]
+        lacI_inh_lacI = p[9] # See if IPTG is present
         if p[9] == 0:
             lacI_inh_lacI = 1 / (1 + p[4] * protein_levels[0])
         
-        lacI_inh_tetR = p[9]
+        lacI_inh_tetR = p[9] # See if IPTG is present
         if p[9] == 0:
             lacI_inh_tetR = 1 / (1 + p[5] * protein_levels[0])    
         
-        tetR_inh_cI = p[8]
+        tetR_inh_cI = p[8] # See if aTc is present
         if p[8] == 0:
             tetR_inh_cI = 1 / (1 + p[6] * protein_levels[1])
         
+        LT_IPTG_inh_TetR = p[10] # See if this value was set. This applies to the qPCR data where TetR is drastically repressed by IPTG.
+        if p[10] == 0:
+            LT_IPTG_inh_TetR = 1
+        
+        IPTG_aTc_IFXNOR_inh_TetR = p[11] # See if this value was set. This applies to the IF and XNOR observations where IPTG can change if added with aTc and cI is not in the middle.
         
         # LacI
         # First term is previous protein amount
@@ -47,11 +52,11 @@ def simulate(p, plt = plt, title = '', test = False):
         # Third term is LacI inhibition on LacI default gene expression, depending on LacI amount
         protein_levels_new[0] = protein_levels[0] + p[0] * protein_levels[0] + lacI_inh_lacI * p[2];
         #TetR
-        protein_levels_new[1] = protein_levels[1] + p[0] * protein_levels[1] + lacI_inh_tetR * p[2]; # calculating next protein level depending on the previous ones and parameters.
+        protein_levels_new[1] = protein_levels[1] + p[0] * protein_levels[1] + IPTG_aTc_IFXNOR_inh_TetR * LT_IPTG_inh_TetR * lacI_inh_tetR * p[2]; # calculating next protein level depending on the previous ones and parameters.
         #λcI
         protein_levels_new[2] = protein_levels[2] + p[0] * protein_levels[2] + tetR_inh_cI * p[3]; # calculating next protein level depending on the previous ones and parameters.
         #YFP
-        protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + (1 / (1 + p[7] * protein_levels[2])) * p[3]; # calculating next protein level depending on the previous ones and parameters.
+        protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + (1 / (1 + p[7] * protein_levels[2])) * p[1]; # calculating next protein level depending on the previous ones and parameters.
         
         
         if test:
