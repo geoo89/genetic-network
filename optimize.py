@@ -57,7 +57,7 @@ class ParamEvaluator():
         params[10] = 1
         params[11] = 1
         
-        for i in range(0, 7):
+        for i in range(0, 8):
             params[i] += p[i]
         
         # if iptg is present:
@@ -184,34 +184,22 @@ if __name__ == "__main__":
               (   100,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
               (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
-              (   0.1,     0,     1),  # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
+              (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
               (     1,  0.01,     2)  # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
               ]
     # Parameters optimized to the expected phenotype (all atc- phenotypes)
-    params_opt = [(-0.044097, -0.200000, 0.000000),  # badness: 146.309185 adjusted to: expected.csv
-            (452.802282, 0.000000, 10000.000000),
-            (1811.542630, 0.000000, 10000.000000),
-            (0.000000, 0.000000, 10000.000000),
-            (4.948351, 0.000000, 40.000000),
-            (3.941708, 0.000000, 40.000000),
-            (46.442643, 0.000000, 100.000000),
-            (44.537003, 0.000000, 100.000000),
-            (0.892342, 0.500000, 1.000000),
-            (0.938568, 0.500000, 1.000000),
-            (0.102170, 0.000000, 1.000000),
-            (1.090492, 0.010000, 2.000000)]
-    params_opt = [(-0.200000, -0.200000, 0.000000),  # badness: 338.419979 method 1
-            (764.539065, 0.000000, 10000.000000),
-            (1610.791980, 0.000000, 10000.000000),
-            (2062.685021, 0.000000, 10000.000000),
-            (10.093851, 0.000000, 40.000000),
-            (6.847941, 0.000000, 40.000000),
-            (22.505003, 0.000000, 100.000000),
-            (13.662501, 0.000000, 100.000000),
-            (0.313203, 0.000000, 1.000000),
-            (0.507572, 0.000000, 1.000000),
-            (0.012910, 0.000000, 1.000000),
-            (1.273778, 0.010000, 2.000000)]
+    params_opt = [(-0.053029, -0.200000, 0.000000),  # badness: 62261.739628 adjusted to: expected2.csv
+            (6054.332267, 0.000000, 10000.000000),
+            (5319.984618, 0.000000, 10000.000000),
+            (2056.505992, 0.000000, 10000.000000),
+            (12.490371, 0.000000, 40.000000),
+            (0.000000, 0.000000, 40.000000),
+            (34.464252, 0.000000, 100.000000),
+            (87.891989, 0.000000, 100.000000),
+            (0.775616, 0.500000, 1.000000),
+            (0.935231, 0.500000, 1.000000),
+            (0.745789, 0.000000, 1.000000),
+            (1.464314, 0.010000, 2.000000)]
     
     all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
     #all_types = ["FFFCLT"]

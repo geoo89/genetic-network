@@ -72,7 +72,7 @@ def simulate(p, title = '', test = False):
         plt.plot(x, protein_levels_plot[:,0], 'r', label='LacI')
         plt.plot(x, protein_levels_plot[:,1], 'b', label='TetR')
         plt.plot(x, protein_levels_plot[:,2], 'g', label='cI')
-        plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP')
+        plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP', linewidth=2.0)
         plt.title(title)
         plt.yscale('log')
         plt.ylim([1, 100000])
