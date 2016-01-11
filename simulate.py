@@ -75,6 +75,7 @@ def simulate(p, title = '', test = False):
         plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP')
         plt.title(title)
         plt.yscale('log')
+        plt.ylim([1, 100000])
         plt.ylabel('Protein Amount [AU]')
         plt.xlabel('time [min]')
         

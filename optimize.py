@@ -129,7 +129,9 @@ class ParamEvaluator():
 # init is the array of initial values of the parameters
 # mins is the array of minimum values each parameter can take
 # maxs is the array of maximum values each parameter can take
-def optimize(func, init, mins, maxs, method, measurement_file):
+# method: use square differences, log ratios or absolute differences
+# debug: print intermediate values
+def optimize(func, init, mins, maxs, method, debug):
     # number of parameters
     n = len(init)
     # the range of each of the 
@@ -156,22 +158,14 @@ def optimize(func, init, mins, maxs, method, measurement_file):
         badness_new = func(vals_new, method)
         # pick the new set of values if they are better
         if badness_new < badness:
-            print("%f @ temp %f: %s" % (badness_new, temp, str(vals_new)))
             badness = badness_new
             vals = vals_new
+            if debug:
+                print("%f @ temp %f: %s" % (badness_new, temp, str(vals_new)))
         # reduce the temperature
         temp -= 0.001
 
-    print("Best function value: %f" % badness)
-    print("Parameters: %s" % str(vals))
-    # printing optimized values in python style to include new parameters in the code 
-    for i in range(len(init)):
-        if i == 0:
-            print("params_opt = [(%f, %f, %f),  # badness: %f adjusted to: %s" % (vals[i], mins[i], maxs[i], badness, measurement_file))
-        elif (i != 0) and (i < (len(init) - 1)):
-            print("\t\t\t(%f, %f, %f)," % (vals[i], mins[i], maxs[i]))
-        else:
-            print("\t\t\t(%f, %f, %f)]" % (vals[i], mins[i], maxs[i]))
+    return badness, vals
     
 
 
@@ -222,10 +216,9 @@ if __name__ == "__main__":
     all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
     #all_types = ["FFFCLT"]
     #measurement_file = 'absolute.csv';
-    measurement_file = 'expected.csv';
+    measurement_file = 'expected2.csv';
     #measurement_file = 'wt.csv';
-    #test = False
-    test = True
+    run_optization = True
     #method = 0 # quad diff
     #method = 1 # ratio-log
     method = 2 # linear diff
@@ -234,30 +227,35 @@ if __name__ == "__main__":
     mins = np.array(transpose[1])
     maxs = np.array(transpose[2])
     
-    # Testing
-    if test:
-        for type in all_types:
-            plt.figure(num = None, figsize=(1000, 800), )
-            for iptgatc in range(4):
-                pos = 221 + iptgatc
-                plt.subplot(pos)
-                title = ''
-                if iptgatc == 0:
-                    title = 'None'
-                elif iptgatc == 1:
-                    title = 'aTc'
-                elif iptgatc == 2:
-                    title = 'IPTG'
-                elif iptgatc == 3:
-                    title = 'Both'
-                applied_params = ParamEvaluator.apply_ruleset(init, type, iptgatc)
-                simulate(applied_params, title, test = test)
-                #plt.get_current_fig_manager().resize
-                plt.tight_layout()
-            plt.show()
-    else:
-        pe = ParamEvaluator(measurement_file)
-        optimize(pe.get_badness, init, mins, maxs, method, measurement_file)
-    
 
-    
+    if run_optization:
+        pe = ParamEvaluator(measurement_file)
+        badness, vals = optimize(pe.get_badness, init, mins, maxs, method, debug = True)
+
+        print("Best badness: %f" % badness)
+        print("Parameters: %s" % str(vals))
+        # printing optimized values in python style to include new parameters in the code 
+        for i in range(len(init)):
+            if i == 0:
+                print("params_opt = [(%f, %f, %f),  # badness: %f adjusted to: %s" % (vals[i], mins[i], maxs[i], badness, measurement_file))
+            elif (i != 0) and (i < (len(init) - 1)):
+                print("\t\t\t(%f, %f, %f)," % (vals[i], mins[i], maxs[i]))
+            else:
+                print("\t\t\t(%f, %f, %f)]" % (vals[i], mins[i], maxs[i]))
+
+        init = vals
+
+    # plot graphs for the simulation
+    titles = ['None', 'aTc', 'IPTG', 'Both']
+    for type in all_types:
+        plt.figure()
+        plt.suptitle(type, fontsize=18)
+        for iptgatc in range(4):
+            pos = 221 + iptgatc
+            plt.subplot(pos)
+            applied_params = ParamEvaluator.apply_ruleset(init, type, iptgatc)
+            simulate(applied_params, titles[iptgatc], test = True)
+            plt.get_current_fig_manager().resize(1000, 800)
+            plt.tight_layout()
+        plt.show()
+        #plt.savefig(type + ".png")
