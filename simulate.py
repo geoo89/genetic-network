@@ -10,7 +10,7 @@ def report_protein(protein, p, coef, i, l):
     sleep(0.01)
     
 # simulate the system with parameters p
-def simulate(p, title = '', test = False):
+def simulate(p, plot = False):
     # start with the empty list
     # these will be our hourly yfp levels
     yfp_levels = []
@@ -38,15 +38,15 @@ def simulate(p, title = '', test = False):
         IPTG_aTc_IFXNOR_inh_TetR = p[11] # See if this value was set. This applies to the IF and XNOR observations where IPTG can change if added with aTc and cI is not in the middle.        
         
 
-        lacI_production = lacI_inh_lacI * p[2]
-        tetR_production = IPTG_aTc_IFXNOR_inh_TetR * LT_IPTG_inh_TetR * lacI_inh_tetR * p[2]
-        cI_production   = tetR_inh_cI * p[3]
+        lacI_production = lacI_inh_lacI * p[2] * (1 + p[15])
+        tetR_production = IPTG_aTc_IFXNOR_inh_TetR * LT_IPTG_inh_TetR * lacI_inh_tetR * p[2] * (1 + p[16])
+        cI_production   = tetR_inh_cI * p[3] * (1 + p[17])
         YFP_production  = cI_inh_YFP * p[1]
 
         # supercoiling
-        lacI_factor = 1 - p[12] * (1 - exp(- (lacI_production * tetR_production) / 1e6))
-        tetR_factor = 1 - p[12] * (1 - exp(- (lacI_production * cI_production) / 1e6))
-        cI_factor =   1 - p[12] * (1 - exp(- (tetR_production * cI_production) / 1e6))
+        lacI_factor = 1 - p[12] * (1 - exp(- (lacI_production * tetR_production) / p[18]))
+        tetR_factor = 1 - p[12] * (1 - exp(- (lacI_production * cI_production) / p[18]))
+        cI_factor =   1 - p[12] * (1 - exp(- (tetR_production * cI_production) / p[18]))
 
         # First term is previous protein amount taking into account protein degradation
         # LacI # Second term is LacI inhibition on LacI default gene expression, depending on LacI amount
@@ -59,7 +59,7 @@ def simulate(p, title = '', test = False):
         protein_levels_new[3] = (1 - p[0] / 3) * protein_levels[3] + YFP_production
         
         
-        if test:
+        if plot:
             protein_levels_plot = vstack((protein_levels_plot, protein_levels_new)) 
         
         protein_levels = protein_levels_new
@@ -71,22 +71,14 @@ def simulate(p, title = '', test = False):
             #print(protein_levels_new[3])
             yfp_levels.append(protein_levels_new[3])
     
-    if test:
+    if plot:
         n_rows = total_time / step
         x = range(0, int(n_rows) + 1)
         plt.plot(x, protein_levels_plot[:,0], 'r', label='LacI')
         plt.plot(x, protein_levels_plot[:,1], 'b', label='TetR')
         plt.plot(x, protein_levels_plot[:,2], 'g', label='cI')
         plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP', linewidth=2.0)
-        plt.title(title)
-        plt.yscale('log')
-        plt.ylim([1, 100000])
-        plt.ylabel('Protein Amount [AU]')
-        plt.xlabel('time [min]')
-        
-        plt.legend(loc='lower right', shadow=True, fontsize='large')
-        #plt.show()
-    
+
     #print(yfp_levels)
     return yfp_levels
 
