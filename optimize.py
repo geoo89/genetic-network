@@ -109,15 +109,6 @@ class ParamEvaluator():
             params[15 + self.protdict[arr[2]]] += p[18]
 
 
-        # mystery stuff
-        # if lacI is first:
-        #if arr[3] == 'L':
-        #    params[2] += p[2]
-        # if lacI is right before tetR:
-        #if (arr[3:4] == 'LT') or (arr[4:6] == 'LT'):
-        #    params[3] += p[3]
-        #    params[2] += p[4]
-
         # at the end, return the parameters for the simulation determined by the ruleset
         return params
 
@@ -290,6 +281,26 @@ if __name__ == "__main__":
                     (   0.0,  -0.5,   0.2), # 16 mystery effect of being backwd  in first position (next to kanamycin resistence)
                     (   0.0,  -0.5,   0.2), # 17 mystery effect of being forward in last  position
                     (   0.0,  -0.5,   0.2)] # 18 mystery effect of being backwd  in last  position
+
+        params_opt = [(0.171439, 0.001000, 0.200000),  # badness: 6775778.493931 adjusted to: absolute.csv
+                    (1776.275058, 40.000000, 3000.000000), #1
+                    (1609.970957, 40.000000, 3000.000000), #2
+                    (40.000000, 40.000000, 3000.000000), #3
+                    (0.100000, 0.000010, 0.100000), #4
+                    (0.000380, 0.000010, 0.100000), #5
+                    (24.456996, 0.000000, 100.000000), #6
+                    (73.701940, 0.000000, 100.000000), #7
+                    (0.870426, 0.500000, 1.000000), #8
+                    (0.510380, 0.500000, 1.000000), #9
+                    (0.033169, 0.000000, 1.000000), #10
+                    (0.595020, 0.500000, 1.200000), #11
+                    (0.130628, 0.000000, 1.000000), #12
+                    (3982728.440083, 500000.000000, 20000000.000000), #13
+                    (0.418130, -0.200000, 0.500000), #14
+                    (-0.472260, -0.500000, 0.200000), #15
+                    (-0.251545, -0.500000, 0.200000), #16
+                    (0.025289, -0.500000, 0.200000), #17
+                    (-0.225124, -0.500000, 0.200000)]
 
     transpose = list(zip(*params))
     init = np.array(transpose[0])
