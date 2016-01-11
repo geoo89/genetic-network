@@ -45,20 +45,17 @@ class ParamEvaluator():
         
         self.data = np.array(datalist)
         self.strain_count = strain_count
-
-    # p: parameters that determine the strength of the effect of the rules
-    # arr: order the three genes are arranged e.g. ['L', 'T', 'C']
-    # ori: their orientations
-    # iptg: True if IPTG is present
-    # atc: True if atc is present
-    # TODO: put actual rules here
-    def apply_ruleset(self, p, typeid, iptgatc):
-        orient = self.types[typeid][0:2]
-        arr = self.types[typeid][3:6]
+    
+    @staticmethod
+    def apply_ruleset(p, typeid, iptgatc):
+        orient = typeid[0:2]
+        arr = typeid[3:6]
         iptg = iptgatc // 2 # integer division
         atc = iptgatc % 2   # modulo
 
         params = np.zeros(len(p))
+        params[10] = 1
+        params[11] = 1
         
         for i in range(0, 7):
             params[i] += p[i]
@@ -69,12 +66,12 @@ class ParamEvaluator():
         # if atc is present:
             if ("LT" in arr) or ("TL" in arr):
                 #print(arr)
-                params[10] += p[10]
+                params[10] = p[10]
         if atc:
             params[8] += p[8]
             if iptg:
                 if arr[2] != 'C':
-                    params[11] += p[11]
+                    params[11] = p[11]
         
         # mystery stuff
         # if lacI is first:
@@ -87,6 +84,15 @@ class ParamEvaluator():
 
         # at the end, return the parameters for the simulation determined by the ruleset
         return params
+        
+    # p: parameters that determine the strength of the effect of the rules
+    # arr: order the three genes are arranged e.g. ['L', 'T', 'C']
+    # ori: their orientations
+    # iptg: True if IPTG is present
+    # atc: True if atc is present
+    # TODO: put actual rules here
+    def apply_ruleset_intern(self, p, typeid, iptgatc):
+        return self.apply_ruleset(p, self.types[typeid], iptgatc)
 
 
     # get_badness is the function we want to optimize
@@ -100,7 +106,7 @@ class ParamEvaluator():
             if self.valids[typeid] == True:
                 for iptgatc in range(4):
                     # get the parameters for the simulation via teh ruleset
-                    params = self.apply_ruleset(p, typeid, iptgatc)
+                    params = self.apply_ruleset_intern(p, typeid, iptgatc)
                     # get the simualted yfp levels
                     yfps = np.array(simulate(params))
                     # get the actual measurements for comparison
@@ -113,6 +119,8 @@ class ParamEvaluator():
                     elif method == 1:
                         yfps = np.maximum(yfps, np.add(np.zeros(4), 0.000001))
                         badness += np.sum(np.abs(np.log10(yfps) - np.log10(measurements)))
+                    elif method == 2:
+                        badness += np.sum(abs(yfps-measurements))
                         
         return badness
 
@@ -121,7 +129,7 @@ class ParamEvaluator():
 # init is the array of initial values of the parameters
 # mins is the array of minimum values each parameter can take
 # maxs is the array of maximum values each parameter can take
-def optimize(func, init, mins, maxs, method):
+def optimize(func, init, mins, maxs, method, measurement_file):
     # number of parameters
     n = len(init)
     # the range of each of the 
@@ -159,7 +167,7 @@ def optimize(func, init, mins, maxs, method):
     # printing optimized values in python style to include new parameters in the code 
     for i in range(len(init)):
         if i == 0:
-            print("params_opt = [(%f, %f, %f),  # badness: %f" % (vals[i], mins[i], maxs[i], badness))
+            print("params_opt = [(%f, %f, %f),  # badness: %f adjusted to: %s" % (vals[i], mins[i], maxs[i], badness, measurement_file))
         elif (i != 0) and (i < (len(init) - 1)):
             print("\t\t\t(%f, %f, %f)," % (vals[i], mins[i], maxs[i]))
         else:
@@ -169,39 +177,58 @@ def optimize(func, init, mins, maxs, method):
 
 if __name__ == "__main__":
               # init, min, max
-    params = [( -0.02,  -0.2,     0), # 0 Protein degradation:
+    params = [( -0.2,  -0.2,     0), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
-              (   234,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
+              (   934,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
               # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
-              (   200,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
-              (   200,     0, 10000), # 3 PTet Needs to be explored. 
-              (     6,     0,    40), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
-              (   5.9,     0,    40), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
+              (   2600,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
+              (   2200,     0, 10000), # 3 PTet Needs to be explored. 
+              (     36,     0,    40), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
+              (   35.9,     0,    40), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
               (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
-              (    40,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
-              (   0.6,     0,     1), # 8 inhibitory effect of aTc on tetR
-              (   0.5,     0,     1), # 9 inhibitory effect of IPTG on LacI
+              (    90,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
+              (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
+              (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
               (   0.1,     0,     1),  # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
               (     1,  0.01,     2)  # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
               ]
     # Parameters optimized to the expected phenotype (all atc- phenotypes)
-    params_opt = [(-0.106998, -0.200000, 0.000000),  # badness: 146.286481
-            (1098.847030, 0.000000, 10000.000000),
-            (1862.774085, 0.000000, 10000.000000),
-            (1353.111463, 0.000000, 10000.000000),
-            (14.863807, 0.000000, 40.000000),
-            (0.052927, 0.000000, 40.000000),
-            (54.613074, 0.000000, 100.000000),
-            (4.424839, 0.000000, 100.000000),
-            (0.410005, 0.000000, 1.000000),
-            (0.723938, 0.000000, 1.000000)]
-
+    params_opt = [(-0.044097, -0.200000, 0.000000),  # badness: 146.309185 adjusted to: expected.csv
+            (452.802282, 0.000000, 10000.000000),
+            (1811.542630, 0.000000, 10000.000000),
+            (0.000000, 0.000000, 10000.000000),
+            (4.948351, 0.000000, 40.000000),
+            (3.941708, 0.000000, 40.000000),
+            (46.442643, 0.000000, 100.000000),
+            (44.537003, 0.000000, 100.000000),
+            (0.892342, 0.500000, 1.000000),
+            (0.938568, 0.500000, 1.000000),
+            (0.102170, 0.000000, 1.000000),
+            (1.090492, 0.010000, 2.000000)]
+    params_opt = [(-0.200000, -0.200000, 0.000000),  # badness: 338.419979 method 1
+            (764.539065, 0.000000, 10000.000000),
+            (1610.791980, 0.000000, 10000.000000),
+            (2062.685021, 0.000000, 10000.000000),
+            (10.093851, 0.000000, 40.000000),
+            (6.847941, 0.000000, 40.000000),
+            (22.505003, 0.000000, 100.000000),
+            (13.662501, 0.000000, 100.000000),
+            (0.313203, 0.000000, 1.000000),
+            (0.507572, 0.000000, 1.000000),
+            (0.012910, 0.000000, 1.000000),
+            (1.273778, 0.010000, 2.000000)]
     
+    #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
+    all_types = ["FFFCLT"]
+    #measurement_file = 'absolute.csv';
+    measurement_file = 'expected.csv';
+    #measurement_file = 'wt.csv';
+    #test = False
     test = False
-    #test = True
     #method = 0 # quad diff
-    method = 1 # ratio-log
+    #method = 1 # ratio-log
+    method = 2 # linear diff
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
@@ -209,29 +236,28 @@ if __name__ == "__main__":
     
     # Testing
     if test:
-        plt.ion()
-        plt.subplot(221)    
-        init[8] = 0
-        init[9] = 0
-        simulate(init, plt, "None", test = test)
-        plt.subplot(222)
-        init[8] = 0.2
-        init[9] = 0
-        simulate(init, plt, "aTc", test = test)
-        plt.subplot(223)
-        init[8] = 0
-        init[9] = 0.1
-        simulate(init, plt, "IPTG", test = test)
-        plt.subplot(224)
-        init[8] = 0.2
-        init[9] = 0.1
-        simulate(init, plt, "Both", test = test)
-        plt.get_current_fig_manager().resize(1000, 800)
-        plt.tight_layout()
-        sleep(10)
+        for type in all_types:
+            plt.ion()
+            for iptgatc in range(4):
+                pos = 221 + iptgatc
+                plt.subplot(pos)
+                title = ''
+                if iptgatc == 0:
+                    title = 'None'
+                elif iptgatc == 0:
+                    title = 'aTc'
+                elif iptgatc == 0:
+                    title = 'IPTG'
+                elif iptgatc == 0:
+                    title = 'Both'
+                applied_params = ParamEvaluator.apply_ruleset(init, type, iptgatc)
+                simulate(applied_params, title, test = test)
+                plt.get_current_fig_manager().resize(1000, 800)
+                plt.tight_layout()
+            sleep(10)
     else:
-        pe = ParamEvaluator('absolute.csv')
-        optimize(pe.get_badness, init, mins, maxs, method)
+        pe = ParamEvaluator(measurement_file)
+        optimize(pe.get_badness, init, mins, maxs, method, measurement_file)
     
 
     
