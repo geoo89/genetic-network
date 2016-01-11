@@ -19,7 +19,7 @@ def simulate(p, title = '', test = False):
     protein_levels_plot = np.zeros((0, 4))
     
     total_time = 10*60*60 + 1
-    step = 3*60
+    step = 1*60
     # here time increases in 60 second steps.
     # you'll probably want that to be more fine-grained
     for time in range(0, total_time, step):
@@ -48,7 +48,7 @@ def simulate(p, title = '', test = False):
         #λcI
         protein_levels_new[2] = protein_levels[2] + p[0] * protein_levels[2] + tetR_inh_cI * p[3]; # calculating next protein level depending on the previous ones and parameters.
         #YFP
-        protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + (1 / (1 + p[7] * protein_levels[2])) * p[1]; # calculating next protein level depending on the previous ones and parameters.
+        protein_levels_new[3] = protein_levels[3] + p[0] * protein_levels[3] + (p[7] + (1 - p[7]) / (1 + p[7] * protein_levels[2])) * p[1]; # calculating next protein level depending on the previous ones and parameters.
         
         
         if test:

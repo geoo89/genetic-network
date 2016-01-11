@@ -177,17 +177,17 @@ def optimize(func, init, mins, maxs, method, measurement_file):
 
 if __name__ == "__main__":
               # init, min, max
-    params = [( -0.2,  -0.2,     0), # 0 Protein degradation:
+    params = [( -0.02,  -0.2,     0), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
-              (   934,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
+              (   234,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
               # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
-              (   2600,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
-              (   2200,     0, 10000), # 3 PTet Needs to be explored. 
-              (     36,     0,    40), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
-              (   35.9,     0,    40), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
+              (   200,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
+              (   200,     0, 10000), # 3 PTet Needs to be explored. 
+              (     6,     0,    40), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
+              (   5.9,     0,    40), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
               (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
-              (    90,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
+              (   100,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
               (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
               (   0.1,     0,     1),  # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
@@ -219,13 +219,13 @@ if __name__ == "__main__":
             (0.012910, 0.000000, 1.000000),
             (1.273778, 0.010000, 2.000000)]
     
-    #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
-    all_types = ["FFFCLT"]
+    all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
+    #all_types = ["FFFCLT"]
     #measurement_file = 'absolute.csv';
     measurement_file = 'expected.csv';
     #measurement_file = 'wt.csv';
     #test = False
-    test = False
+    test = True
     #method = 0 # quad diff
     #method = 1 # ratio-log
     method = 2 # linear diff
@@ -237,24 +237,24 @@ if __name__ == "__main__":
     # Testing
     if test:
         for type in all_types:
-            plt.ion()
+            plt.figure(num = None, figsize=(1000, 800), )
             for iptgatc in range(4):
                 pos = 221 + iptgatc
                 plt.subplot(pos)
                 title = ''
                 if iptgatc == 0:
                     title = 'None'
-                elif iptgatc == 0:
+                elif iptgatc == 1:
                     title = 'aTc'
-                elif iptgatc == 0:
+                elif iptgatc == 2:
                     title = 'IPTG'
-                elif iptgatc == 0:
+                elif iptgatc == 3:
                     title = 'Both'
                 applied_params = ParamEvaluator.apply_ruleset(init, type, iptgatc)
                 simulate(applied_params, title, test = test)
-                plt.get_current_fig_manager().resize(1000, 800)
+                #plt.get_current_fig_manager().resize
                 plt.tight_layout()
-            sleep(10)
+            
     else:
         pe = ParamEvaluator(measurement_file)
         optimize(pe.get_badness, init, mins, maxs, method, measurement_file)
