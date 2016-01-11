@@ -50,10 +50,15 @@ class ParamEvaluator():
         self.data = np.array(datalist)
         self.strain_count = strain_count
     
-    @staticmethod
-    def apply_ruleset(p, typeid, iptgatc):
-        orient = typeid[0:3]
-        arr = typeid[3:6]
+    # p: parameters that determine the strength of the effect of the rules
+    # arr: order the three genes are arranged e.g. ['L', 'T', 'C']
+    # ori: their orientations
+    # iptg: True if IPTG is present
+    # atc: True if atc is present
+    # TODO: put actual rules here
+    def apply_ruleset(self, p, typeid, iptgatc):
+        orient = self.types[typeid][0:3]
+        arr = self.types[typeid][3:6]
         iptg = iptgatc // 2 # integer division
         atc = iptgatc % 2   # modulo
 
@@ -94,15 +99,6 @@ class ParamEvaluator():
 
         # at the end, return the parameters for the simulation determined by the ruleset
         return params
-        
-    # p: parameters that determine the strength of the effect of the rules
-    # arr: order the three genes are arranged e.g. ['L', 'T', 'C']
-    # ori: their orientations
-    # iptg: True if IPTG is present
-    # atc: True if atc is present
-    # TODO: put actual rules here
-    def apply_ruleset_intern(self, p, typeid, iptgatc):
-        return self.apply_ruleset(p, self.types[typeid], iptgatc)
 
 
     # get_badness is the function we want to optimize
@@ -116,7 +112,7 @@ class ParamEvaluator():
             if self.valids[typeid] == True:
                 for iptgatc in range(4):
                     # get the parameters for the simulation via teh ruleset
-                    params = self.apply_ruleset_intern(p, typeid, iptgatc)
+                    params = self.apply_ruleset(p, typeid, iptgatc)
                     # get the simualted yfp levels
                     yfps = np.array(simulate(params))
                     # get the actual measurements for comparison
@@ -184,10 +180,10 @@ if __name__ == "__main__":
     params = [(  0.02,     0,    0.2), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
-              (   234,     0, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
+              (   234,    40, 10000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
               # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
-              (   200,     0, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
-              (   200,     0, 10000), # 3 PTet Needs to be explored. 
+              (   200,    40, 10000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
+              (   200,    40, 10000), # 3 PTet Needs to be explored. 
               (     6,     0,    40), # 4 repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
               (   5.9,     0,    40), # 5 repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
               (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
@@ -201,10 +197,10 @@ if __name__ == "__main__":
     
     #all_types = ["FFFCLT", "FFFCTL", "FFFLCT", "FFFLTC", "FFFTCL", "FFFTLC", "FRFCLT", "FRFCTL", "FRFLCT", "FRFLTC", "FRFTCL", "FRFTLC", "FFRCLT", "FFRCTL", "FFRLCT", "FFRLTC", "FFRTCL", "FFRTLC", "FRRCLT", "FRRCTL", "FRRLCT", "FRRLTC", "FRRTCL", "FRRTLC", "RRRCLT", "RRRCTL", "RRRLCT", "RRRLTC", "RRRTCL", "RRRTLC", "RRFCLT", "RRFCTL", "RRFLCT", "RRFLTC", "RRFTCL", "RRFTLC", "RFFCLT", "RFFCTL", "RFFLCT", "RFFLTC", "RFFTCL", "RFFTLC", "RFRCLT", "RFRCTL", "RFRLCT", "RFRLTC", "RFRTCL", "RFRTLC"]
     all_types = ["FFFCLT"]
-    #measurement_file = 'absolute.csv';
-    measurement_file = 'expected2.csv';
+    measurement_file = 'absolute.csv';
+    #measurement_file = 'expected2.csv';
     #measurement_file = 'wt.csv';
-    run_optization = False
+    run_optization = True
     #method = 0 # quad diff
     #method = 1 # ratio-log
     method = 2 # linear diff
@@ -215,8 +211,8 @@ if __name__ == "__main__":
                     (1233.563963, 0.000000, 10000.000000),
                     (673.542274, 0.000000, 10000.000000),
                     (1.254526, 0.000000, 10000.000000),
-                    (1.245438, 0.000000, 40.000000),
-                    (0.306181, 0.000000, 40.000000),
+                    (6.245438, 0.000000, 40.000000),
+                    (6.306181, 0.000000, 40.000000),
                     (51.976855, 0.000000, 100.000000),
                     (92.996234, 0.000000, 100.000000),
                     (0.946784, 0.500000, 1.000000),
@@ -228,10 +224,10 @@ if __name__ == "__main__":
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
     maxs = np.array(transpose[2])
-    
 
+
+    pe = ParamEvaluator(measurement_file)
     if run_optization:
-        pe = ParamEvaluator(measurement_file)
         badness, vals = optimize(pe.get_badness, init, mins, maxs, method, debug = True)
 
         print("Best badness: %f" % badness)
@@ -255,7 +251,7 @@ if __name__ == "__main__":
         for iptgatc in range(4):
             pos = 221 + iptgatc
             plt.subplot(pos)
-            applied_params = ParamEvaluator.apply_ruleset(init, type, iptgatc)
+            applied_params = pe.apply_ruleset(init, type, iptgatc)
             simulate(applied_params, titles[iptgatc], test = True)
             plt.get_current_fig_manager().resize(1000, 800)
             plt.tight_layout()
