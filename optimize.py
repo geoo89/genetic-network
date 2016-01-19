@@ -239,8 +239,8 @@ if __name__ == "__main__":
     run_optization = True
     #method = 0 # quad diff
     #method = 1 # ratio-log
-    method = 2 # linear diff
-    #method = 3 # exponential ratio-log
+    #method = 2 # linear diff
+    method = 3 # exponential ratio-log
 
     if not run_optization:
         # Parameters optimized to the expected phenotype of FFFCTL
@@ -313,6 +313,8 @@ if __name__ == "__main__":
                     (-0.251545, -0.500000, 0.200000), #16
                     (0.025289, -0.500000, 0.200000), #17
                     (-0.225124, -0.500000, 0.200000)]
+        
+        
 
 
     transpose = list(zip(*params))

@@ -77,7 +77,7 @@ def simulate(p, plot = False):
         plt.plot(x, protein_levels_plot[:,0], 'r', label='LacI')
         plt.plot(x, protein_levels_plot[:,1], 'b', label='TetR')
         plt.plot(x, protein_levels_plot[:,2], 'g', label='cI')
-        plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP', linewidth=2.0)
+        plt.plot(x, protein_levels_plot[:,3], 'darkgoldenrod', label='YFP', linewidth=3.0)
 
     #print(yfp_levels)
     return yfp_levels
