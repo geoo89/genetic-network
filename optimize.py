@@ -51,7 +51,8 @@ class ParamEvaluator():
         
         self.data = np.array(datalist)
         self.strain_count = strain_count
-    
+
+  
     # p: parameters that determine the strength of the effect of the rules
     # arr: order the three genes are arranged e.g. ['L', 'T', 'C']
     # ori: their orientations
@@ -181,7 +182,7 @@ def optimize(func, init, mins, maxs, method, debug):
     temp = 0.4
     # initial badness for the initial parameters
     badness = func(vals, method, debug)
-    print("%f @ temp %f: %s" % (badness, 0.21, str(vals)))
+    print("%f @ temp %f: %s" % (badness, temp, str(vals)))
     badness_new = 0.0
     while temp > 0.0005:
         #print("Temp: %f Badness: %f" % (temp, badness_new))
@@ -211,20 +212,20 @@ if __name__ == "__main__":
     params = [(  0.02,  1e-3,   0.2), # 0 Protein degradation:
               # Purcell, Oliver, and Nigel J Savery. "Temperature dependence of ssrA-tag mediated protein degradation" Jbe 6:10 (2012)
               # Halftime approx. 20% degradation in 10mins -> 2% is a good starting point 
-              (   234,    40,  3000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
+              (   234,   400,  2000), # 1 Pλ (YFP) default expression with no interference based on max change in fluorescence readout
               # Based on fluorescence levels. Simply fluorescence levels were taken as arbitrary unit of protein amount in the cell
-              (   200,    40,  3000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
-              (   200,    40,  3000), # 3 PTet Needs to be explored. 
+              (   200,   400,  2000), # 2 PLac Needs to be explored. Leakiness of the promoter is probably derived from the 1/600 repressive effect
+              (   200,   400,  2000), # 3 PTet Needs to be explored. 
               (  0.05,  1e-5,   0.1), # 4 inverse repressive effect of LacI on LacI per 1 AU protein, will be multiplied with the protein amount
               (  0.05,  1e-5,   0.1), # 5 inverse repressive effect of LacI on TetR per 1 AU protein, will be multiplied with the protein amount
               (    50,     0,   100), # 6 repressive effect of TetR on λcI per 1 AU protein
               (   100,     0,   100), # 7 repressive effect of λcI on Pλ (YFP) to be multiplied with default expression rate
               (   0.9,   0.5,     1), # 8 inhibitory effect of aTc on tetR
               (   0.9,   0.5,     1), # 9 inhibitory effect of IPTG on pLac
-              (   0.1,     0,     1), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
-              (     1,   0.5,   1.2), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
+              (   0.1,     0,   0.4), # 10 mystery inhibitory effect of IPTG and LacI-TetR neighbourship on TetR
+              (     1,  0.75,   1.1), # 11 mystery effect when IPTG and aTc are present and C is not in the middle on TetR
               (   0.5,   0.0,     1), # 12 mystery effect of supercoiling (two genes facing each other)
-              (   1e6  , 5e5,   2e7), # 13 -> 18 mystery effect param 2 of supercoiling (two genes facing each other)
+              (   1e6  , 5e5,   2e6), # 13 -> 18 mystery effect param 2 of supercoiling (two genes facing each other)
               (   0.5,  -0.2,   0.5), # 14 NOT USED mystery effect of inverse supercoiling (two genes facing away from each other)
               (   0.0,  -0.5,   0.2), # 15 mystery effect of being forward in first position (next to kanamycin resistence)
               (   0.0,  -0.5,   0.2), # 16 mystery effect of being backwd  in first position (next to kanamycin resistence)
@@ -287,7 +288,7 @@ if __name__ == "__main__":
                     (0.450252, 0.000000, 1.000000),
                     (0.179741, 0.010000, 2.000000),
                     (0.813581, 0.000000, 1.000000),
-                    (   1e6  , 2e5,   5e7), # 13 mystery effect param 2 of supercoiling (two genes facing each other)
+                    (   1e6  , 2e5,   5e6), # 13 mystery effect param 2 of supercoiling (two genes facing each other)
                     (   0.5,  -0.2,   0.5), # 14 NOT USED mystery effect of inverse supercoiling (two genes facing away from each other)
                     (   0.0,  -0.5,   0.2), # 15 mystery effect of being forward in first position (next to kanamycin resistence)
                     (   0.0,  -0.5,   0.2), # 16 mystery effect of being backwd  in first position (next to kanamycin resistence)
@@ -307,23 +308,124 @@ if __name__ == "__main__":
                     (0.033169, 0.000000, 1.000000), #10
                     (0.595020, 0.500000, 1.200000), #11
                     (0.130628, 0.000000, 1.000000), #12
-                    (3982728.440083, 500000.000000, 20000000.000000), #13
+                    (1982720.440083, 500000.000000, 2000000.000000), #13
                     (0.418130, -0.200000, 0.500000), #14
                     (-0.472260, -0.500000, 0.200000), #15
                     (-0.251545, -0.500000, 0.200000), #16
+
                     (0.025289, -0.500000, 0.200000), #17
                     (-0.225124, -0.500000, 0.200000)]
         
         
 
 
+        params_opt = [(0.187677, 0.001000, 0.200000),  # badness: 6635274.245282 adjusted to: absolute.csv
+                    (2671.996273, 40.000000, 3000.000000), #1
+                    (2924.223389, 40.000000, 3000.000000), #2
+                    (1424.017844, 40.000000, 3000.000000), #3
+                    (0.004897, 0.000010, 0.100000), #4
+                    (0.000010, 0.000010, 0.100000), #5
+                    (61.101814, 0.000000, 100.000000), #6
+                    (61.860700, 0.000000, 100.000000), #7
+                    (0.809836, 0.500000, 1.000000), #8
+                    (0.900776, 0.500000, 1.000000), #9
+                    (0.259814, 0.000000, 1.000000), #10
+                    (1.200000, 0.500000, 1.200000), #11
+                    (0.002108, 0.000000, 1.000000), #12
+                    (605044.474515, 500000.000000, 2000000.000000), #13
+                    (-0.062116, -0.200000, 0.500000), #14
+                    (-0.500000, -0.500000, 0.200000), #15
+                    (0.197065, -0.500000, 0.200000), #16
+                    (0.096841, -0.500000, 0.200000), #17
+                    (0.109135, -0.500000, 0.200000)]
+
+        params_opt = [(0.056561, 0.001000, 0.200000),  # badness: 6257955.350904 adjusted to: absolute.csv
+                    (1460.576509, 40.000000, 3000.000000), #1
+                    (1951.481194, 40.000000, 3000.000000), #2
+                    (2878.172339, 40.000000, 3000.000000), #3
+                    (0.098907, 0.000010, 0.100000), #4
+                    (0.000086, 0.000010, 0.100000), #5
+                    (96.326246, 0.000000, 100.000000), #6
+                    (99.932418, 0.000000, 100.000000), #7
+                    (0.605721, 0.500000, 1.000000), #8
+                    (0.627882, 0.500000, 1.000000), #9
+                    (0.587437, 0.000000, 1.000000), #10
+                    (0.570883, 0.500000, 1.200000), #11
+                    (0.850280, 0.000000, 1.000000), #12
+                    (500000.000000, 500000.000000, 2000000.000000), #13
+                    (0.079301, -0.200000, 0.500000), #14
+                    (-0.497382, -0.500000, 0.200000), #15
+                    (0.076352, -0.500000, 0.200000), #16
+                    (0.182848, -0.500000, 0.200000), #17
+                    (0.198350, -0.500000, 0.200000)]
+
+        params_opt = [(0.001000, 0.001000, 0.200000),  # badness: 172975885072.474243 adjusted to: absolute.csv
+                    (1059.058075, 40.000000, 3000.000000), #1
+                    (3000.000000, 40.000000, 3000.000000), #2
+                    (444.594275, 40.000000, 3000.000000), #3
+                    (0.043050, 0.000010, 0.100000), #4
+                    (0.076922, 0.000010, 0.100000), #5
+                    (58.626169, 0.000000, 100.000000), #6
+                    (0.050464, 0.000000, 100.000000), #7
+                    (1.000000, 0.500000, 1.000000), #8
+                    (0.945240, 0.500000, 1.000000), #9
+                    (0.546969, 0.000000, 1.000000), #10
+                    (1.157870, 0.500000, 1.200000), #11
+                    (0.000000, 0.000000, 1.000000), #12
+                    (2000000.000000, 500000.000000, 2000000.000000), #13
+                    (0.059885, -0.200000, 0.500000), #14
+                    (0.025626, -0.500000, 0.200000), #15
+                    (-0.005543, -0.500000, 0.200000), #16
+                    (-0.136746, -0.500000, 0.200000), #17
+                    (0.071790, -0.500000, 0.200000)]
+
+        params_opt = [(0.002492, 0.001000, 0.200000),  # badness: 232.815441 adjusted to: absolute.csv
+                    (2919.329606, 40.000000, 3000.000000), #1
+                    (40.000000, 40.000000, 3000.000000), #2
+                    (1829.276847, 40.000000, 3000.000000), #3
+                    (0.057379, 0.000010, 0.100000), #4
+                    (0.006522, 0.000010, 0.100000), #5
+                    (37.876250, 0.000000, 100.000000), #6
+                    (0.053682, 0.000000, 100.000000), #7
+                    (0.600225, 0.500000, 1.000000), #8
+                    (0.899838, 0.500000, 1.000000), #9
+                    (0.518836, 0.000000, 1.000000), #10
+                    (1.173547, 0.500000, 1.200000), #11
+                    (0.719729, 0.000000, 1.000000), #12
+                    (1936070.478189, 500000.000000, 2000000.000000), #13
+                    (-0.200000, -0.200000, 0.500000), #14
+                    (-0.275646, -0.500000, 0.200000), #15
+                    (0.072606, -0.500000, 0.200000), #16
+                    (-0.175520, -0.500000, 0.200000), #17
+                    (-0.485289, -0.500000, 0.200000)]
+
+        params_opt = [(0.001000, 0.001000, 0.200000),  # badness: 5121931.820267 adjusted to: absolute.csv
+                    (3000.000000, 40.000000, 3000.000000), #1
+                    (1321.260148, 40.000000, 3000.000000), #2
+                    (116.650589, 40.000000, 3000.000000), #3
+                    (0.048309, 0.000010, 0.100000), #4
+                    (0.028955, 0.000010, 0.100000), #5
+                    (20.056103, 0.000000, 100.000000), #6
+                    (0.699753, 0.000000, 100.000000), #7
+                    (0.829489, 0.500000, 1.000000), #8
+                    (0.989290, 0.500000, 1.000000), #9
+                    (0.584500, 0.000000, 1.000000), #10
+                    (0.538165, 0.500000, 1.200000), #11
+                    (0.164592, 0.000000, 1.000000), #12
+                    (1848977.354478, 500000.000000, 2000000.000000), #13
+                    (0.337870, -0.200000, 0.500000), #14
+                    (-0.497920, -0.500000, 0.200000), #15
+                    (-0.194691, -0.500000, 0.200000), #16
+                    (0.090558, -0.500000, 0.200000), #17
+                    (0.183541, -0.500000, 0.200000)]
+
     transpose = list(zip(*params))
     init = np.array(transpose[0])
     mins = np.array(transpose[1])
     maxs = np.array(transpose[2])
 
-
     pe = ParamEvaluator(measurement_file)
+
     if run_optization:
         badness, vals = optimize(pe.get_badness, init, mins, maxs, method, debug = 1)
 
