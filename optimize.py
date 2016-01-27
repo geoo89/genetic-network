@@ -164,6 +164,29 @@ class ParamEvaluator():
             plt.plot(self.plotx, self.data[typeid][iptgatc], 'orange', label='YFP measured', linewidth=2.0)
     
 
+    def print_mirror_pairs():
+        # I haven't really tested this lately, it worked at some point.
+        used = set()
+        for i in range(48):
+            if i in used:
+                continue
+            tp = self.types[i]
+            chars = [0,0,0,0,0,0]
+            for q in range(3):
+                if tp[q] == 'F':
+                    chars[2-q] = 'R'
+                if tp[q] == 'R':
+                    chars[2-q] = 'F'
+            chars[5] = tp[3]
+            chars[3] = tp[5]
+            chars[4] = tp[4]
+            inverse = ''.join(chars)
+            for j in range(48):
+                if self.types[j] == inverse:
+                    print(self.types[i], self.data[i], self.types[j], self.data[j])
+                    used.add(j)
+
+
 # func is the function we want to optimize
 # init is the array of initial values of the parameters
 # mins is the array of minimum values each parameter can take
